@@ -1,74 +1,99 @@
-# 🍃 LightChat
+# LightChat
 
-**LightChat** est une application de chat moderne et minimaliste ✨, propulsée par l’**API Google Gemini** 🤖 pour générer des réponses intelligentes en temps réel.
+LightChat is a modern, minimalist AI chat application powered by Google Gemini through the [Vercel AI SDK](https://ai-sdk.dev/) for real-time intelligent responses.
 
-[https://lightchat-two.vercel.app](https://lightchat-two.vercel.app)
-
----
-
-## 🚀 Fonctionnalités
-
-- 💬 Interface de chat moderne, fluide et responsive
-- 🔗 Intégration directe de l’**API Google Gemini**
-- 🎞️ Animations élégantes avec **Framer Motion**
-- 🧘‍♂️ Design **minimaliste et épuré**
+Live demo: [https://lightchat-two.vercel.app](https://lightchat-two.vercel.app)
 
 ---
 
-## 🛠️ Prérequis
+## Features
 
-- ✅ **Node.js 18+** et **npm**
-- 🔑 Une **clé API Google Gemini**
+- Modern, responsive chat interface with smooth animations
+- Server-side streaming via the Vercel AI SDK and Google Gemini
+- Conversation management (create, rename, delete)
+- Markdown rendering with syntax-highlighted code blocks
+- Dark mode UI
+- Mobile-friendly layout
 
 ---
 
-## ⚙️ Installation
+## Prerequisites
 
-1. 📁 Clonez le repository :
+- [Bun](https://bun.sh/) (v1.0+)
+- A Google Gemini API key (set as `GOOGLE_GENERATIVE_AI_API_KEY`)
+
+---
+
+## Installation
+
+1. Clone the repository:
    ```bash
-   git clone https://github.com/votre-username/light-chat.git
+   git clone https://github.com/gayakaci20/light-chat.git
    cd light-chat
    ```
 
-2. 📦 Installez les dépendances :
+2. Install dependencies:
    ```bash
-   npm install
+   bun install
    ```
 
-3. 🔐 Créez un fichier `.env.local` à la racine du projet avec votre clé API :
+3. Create a `.env.local` file at the project root with your API key:
    ```
-   NEXT_PUBLIC_GEMINI_API_KEY=votre_clé_api_ici
+   GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
    ```
 
-4. ▶️ Lancez l’application :
+4. Start the development server:
    ```bash
-   npm run dev
+   bun run dev
    ```
 
-   🔗 L'application sera accessible sur : [http://localhost:3000](http://localhost:3000)
+   The application will be available at [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🧑‍💻 Utilisation
+## Usage
 
-1. Ouvrez l’application dans votre navigateur 🌐  
-2. Tapez un message dans la zone de saisie 📝  
-3. Appuyez sur **Entrée** ou cliquez sur le bouton d’envoi 📩  
-4. Laissez l’IA vous répondre avec style 🤖💡
-
----
-
-## 🧱 Technologies utilisées
-
-- ⚛️ **Next.js 14**
-- ⚙️ **React** + **TypeScript**
-- 🎨 **TailwindCSS**
-- 🔮 **Google Gemini API**
-- 🧲 **Framer Motion**
-- 🎯 **Heroicons**
+1. Open the application in your browser.
+2. Type a message in the input field.
+3. Press **Enter** or click the send button.
+4. The AI will respond in real time via streaming.
 
 ---
 
-## 🪪 Licence
+## Tech Stack
 
-📝 Ce projet est sous licence **MIT**. Utilisation libre et open source 👐
+- **Next.js 16** with Turbopack
+- **React 19** + **TypeScript**
+- **Vercel AI SDK** (`ai`, `@ai-sdk/google`, `@ai-sdk/react`)
+- **Tailwind CSS 4**
+- **Zustand** for client-side state management
+- **Framer Motion** for animations
+- **Bun** as the package manager and runtime
+
+---
+
+## Project Structure
+
+```
+src/
+  app/
+    api/chat/route.ts   # Server-side AI streaming endpoint
+    layout.tsx           # Root layout
+    page.tsx             # Home page
+    globals.css          # Global styles
+  components/
+    Chat.tsx             # Chat interface (useChat hook)
+    ChatMessage.tsx      # Message rendering with markdown
+    Sidebar.tsx          # Conversation sidebar
+    ModelSelector.tsx    # AI model selector
+    LoadingDots.tsx      # Loading animation
+  lib/
+    store.ts             # Zustand store
+    utils.ts             # Utility functions
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License. Free and open source.

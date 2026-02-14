@@ -3,7 +3,7 @@
 import { Sidebar } from '@/components/Sidebar'
 import { Chat } from '@/components/Chat'
 import { useStore } from '@/lib/store'
-import { Bars3Icon } from '@heroicons/react/24/outline'
+import { Menu } from 'lucide-react'
 
 export default function Home() {
   const {
@@ -18,16 +18,14 @@ export default function Home() {
   } = useStore()
 
   return (
-    <div className="fixed inset-0 flex bg-gray-100 dark:bg-gray-900">
-      {/* Mobile menu button */}
+    <div className="fixed inset-0 flex bg-gray-900">
       <button
         onClick={() => setMobileMenuOpen(true)}
         className="fixed left-4 top-4 z-40 rounded-lg bg-gray-900 p-2 text-white md:hidden"
       >
-        <Bars3Icon className="h-6 w-6" />
+        <Menu className="h-6 w-6" />
       </button>
 
-      {/* Sidebar */}
       <Sidebar
         conversations={conversations}
         currentConversation={currentConversation}
@@ -39,7 +37,6 @@ export default function Home() {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main content */}
       <main className="flex flex-1 flex-col overflow-hidden relative w-full">
         {currentConversation ? (
           <Chat />
@@ -47,9 +44,9 @@ export default function Home() {
           <div className="absolute inset-0 flex items-center justify-center">
             <button
               onClick={addConversation}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-white hover:bg-gray-800"
+              className="rounded-lg bg-gray-800 px-4 py-2 text-white hover:bg-gray-700"
             >
-              Démarrer une nouvelle conversation
+              Start a new conversation
             </button>
           </div>
         )}
