@@ -1,11 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { Chat } from '@/components/Chat'
+import { SettingsModal } from '@/components/SettingsModal'
 import { useStore } from '@/lib/store'
 import { Menu } from 'lucide-react'
 
 export default function Home() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   const {
     conversations,
     currentConversation,
@@ -19,9 +23,11 @@ export default function Home() {
 
   return (
     <div className="fixed inset-0 flex bg-gray-900">
+      {/* Mobile hamburger */}
       <button
         onClick={() => setMobileMenuOpen(true)}
         className="fixed left-4 top-4 z-40 rounded-lg bg-gray-900 p-2 text-white md:hidden"
+        aria-label="Open sidebar"
       >
         <Menu className="h-6 w-6" />
       </button>
@@ -35,11 +41,12 @@ export default function Home() {
         onEditChat={editConversation}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       <main className="flex flex-1 flex-col overflow-hidden relative w-full">
         {currentConversation ? (
-          <Chat />
+          <Chat onOpenSettings={() => setIsSettingsOpen(true)} />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <button
@@ -51,6 +58,11 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   )
 }

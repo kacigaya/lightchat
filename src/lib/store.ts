@@ -1,12 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type ModelType =
-  | 'gemini-2.0-flash'
-  | 'gemini-2.5-flash-preview-04-17'
-  | 'gemini-1.5-pro'
-  | 'gemini-1.5-flash'
-
 export interface Conversation {
   id: string
   title: string
@@ -16,7 +10,6 @@ export interface Conversation {
 interface ChatStore {
   conversations: Conversation[]
   currentConversation: string | null
-  selectedModel: ModelType
   isMobileMenuOpen: boolean
 
   addConversation: () => string
@@ -24,7 +17,6 @@ interface ChatStore {
   selectConversation: (id: string) => void
   editConversation: (id: string, title: string) => void
   setMobileMenuOpen: (isOpen: boolean) => void
-  setSelectedModel: (model: ModelType) => void
 }
 
 export const useStore = create<ChatStore>()(
@@ -33,7 +25,6 @@ export const useStore = create<ChatStore>()(
       conversations: [],
       currentConversation: null,
       isMobileMenuOpen: false,
-      selectedModel: 'gemini-2.0-flash',
 
       addConversation: () => {
         const id = crypto.randomUUID()
@@ -55,13 +46,16 @@ export const useStore = create<ChatStore>()(
           if (remaining.length === 0) {
             const newId = crypto.randomUUID()
             return {
-              conversations: [{ id: newId, title: 'New conversation', timestamp: new Date() }],
+              conversations: [
+                { id: newId, title: 'New conversation', timestamp: new Date() },
+              ],
               currentConversation: newId,
             }
           }
           return {
             conversations: remaining,
-            currentConversation: state.currentConversation === id ? null : state.currentConversation,
+            currentConversation:
+              state.currentConversation === id ? null : state.currentConversation,
           }
         })
       },
@@ -71,15 +65,13 @@ export const useStore = create<ChatStore>()(
       editConversation: (id, title) => {
         set((state) => ({
           conversations: state.conversations.map((c) =>
-            c.id === id ? { ...c, title } : c
+            c.id === id ? { ...c, title } : c,
           ),
         }))
       },
 
       setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
-
-      setSelectedModel: (model) => set({ selectedModel: model }),
     }),
-    { name: 'lightchat-storage' }
-  )
-) 
+    { name: 'lightchat-storage' },
+  ),
+)

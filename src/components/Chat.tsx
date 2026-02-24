@@ -6,13 +6,35 @@ import { DefaultChatTransport } from 'ai'
 import { ChatMessage } from './ChatMessage'
 import { LoadingDots } from './LoadingDots'
 import { useStore } from '@/lib/store'
-import { Send } from 'lucide-react'
+import { useLLM } from '@/contexts/llm-context'
+import { getProvider } from '@/lib/providers'
+import { Send, Settings, AlertTriangle } from 'lucide-react'
 
-export function Chat() {
+interface ChatProps {
+  onOpenSettings: () => void
+}
+
+export function Chat({ onOpenSettings }: ChatProps) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { currentConversation, conversations, addConversation, selectedModel, editConversation } = useStore()
+
+  const {
+    currentConversation,
+    conversations,
+    addConversation,
+    editConversation,
+  } = useStore()
+
+  const {
+    activeProviderId,
+    activeModel,
+    activeApiKey,
+    activeExtraConfig,
+    isConfigured,
+  } = useLLM()
+
+  const activeProvider = getProvider(activeProviderId)
 
   useEffect(() => {
     if (conversations.length === 0) {
@@ -20,15 +42,16 @@ export function Chat() {
     }
   }, [conversations.length, addConversation])
 
-  const {
-    messages,
-    sendMessage,
-    status,
-  } = useChat({
+  const { messages, sendMessage, status } = useChat({
     id: currentConversation ?? undefined,
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { model: selectedModel },
+      body: {
+        provider: activeProviderId,
+        apiKey: activeApiKey,
+        model: activeModel,
+        extraConfig: activeExtraConfig,
+      },
     }),
   })
 
@@ -64,11 +87,11 @@ export function Chat() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
-      if (!input.trim() || isLoading) return
+      if (!input.trim() || isLoading || !isConfigured) return
       sendMessage({ text: input })
       setInput('')
     },
-    [input, isLoading, sendMessage]
+    [input, isLoading, isConfigured, sendMessage],
   )
 
   const handleKeyDown = useCallback(
@@ -78,15 +101,58 @@ export function Chat() {
         handleSubmit(e)
       }
     },
-    [handleSubmit]
+    [handleSubmit],
   )
 
   return (
     <div className="flex h-full flex-col bg-gray-900">
+      {/* Provider badge */}
+      <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
+        {isConfigured ? (
+          <span className="rounded-full bg-gray-800 border border-gray-700 px-2.5 py-0.5 text-xs text-gray-400">
+            {activeProvider?.badge ?? activeProviderId} · {activeModel}
+          </span>
+        ) : (
+          <button
+            onClick={onOpenSettings}
+            className="flex items-center gap-1.5 rounded-full bg-amber-900/50 border border-amber-700/50 px-2.5 py-0.5 text-xs text-amber-300 hover:bg-amber-900 transition-colors"
+          >
+            <AlertTriangle className="h-3 w-3" />
+            Configure provider
+          </button>
+        )}
+        <button
+          onClick={onOpenSettings}
+          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
+          aria-label="Open settings"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32 pt-12">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            Start a new conversation...
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+            {!isConfigured ? (
+              <>
+                <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-6 py-5 max-w-sm">
+                  <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
+                  <p className="text-sm text-amber-200 font-medium mb-1">No provider configured</p>
+                  <p className="text-xs text-amber-400 mb-4">
+                    Open Settings to add your API key and select a model.
+                  </p>
+                  <button
+                    onClick={onOpenSettings}
+                    className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors"
+                  >
+                    Open Settings
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-400 text-sm">Start a new conversation…</p>
+            )}
           </div>
         ) : (
           messages.map((message) => {
@@ -107,6 +173,7 @@ export function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input form */}
       <form
         onSubmit={handleSubmit}
         className="border-t border-gray-800 fixed bottom-0 left-0 right-0 bg-gray-900 z-10 safe-bottom md:left-72"
@@ -117,14 +184,15 @@ export function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question..."
-            className="flex-1 resize-none rounded-2xl border border-gray-800 bg-gray-800 p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder={isConfigured ? 'Ask a question…' : 'Configure a provider in Settings first…'}
+            disabled={!isConfigured}
+            className="flex-1 resize-none rounded-2xl border border-gray-800 bg-gray-800 p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             rows={1}
             style={{ maxHeight: '150px' }}
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input.trim() || !isConfigured}
             className="p-3 rounded-2xl bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="h-5 w-5" />
