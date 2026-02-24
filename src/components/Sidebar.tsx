@@ -1,6 +1,7 @@
 'use client'
 
 import { Plus, X, Pencil, Check, MessageSquare, Github, Settings } from 'lucide-react'
+import { Button } from '@base-ui/react/button'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -76,9 +77,10 @@ export function Sidebar({
         {/* Mobile close button */}
         <div className="flex-shrink-0 flex items-center justify-between p-2 md:hidden">
           <span />
-          <button onClick={onCloseMobile} className="rounded-lg p-2 hover:bg-gray-800">
+          {/* CHANGED: native button → Base UI Button */}
+          <Button onClick={onCloseMobile} className="rounded-lg p-2 hover:bg-gray-800">
             <X className="h-6 w-6 text-gray-400" />
-          </button>
+          </Button>
         </div>
 
         {/* Logo + New conversation */}
@@ -98,13 +100,14 @@ export function Sidebar({
             </div>
           </div>
 
-          <button
+          {/* CHANGED: native button → Base UI Button */}
+          <Button
             onClick={onNewChat}
             className="flex w-full items-center gap-3 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
           >
             <Plus className="h-5 w-5" />
             New conversation
-          </button>
+          </Button>
         </div>
 
         {/* Conversation list */}
@@ -142,7 +145,8 @@ export function Sidebar({
                   {currentConversation === chat.id && (
                     <div className="flex items-center gap-1">
                       {editingChatId === chat.id ? (
-                        <button
+                        // CHANGED: native button → Base UI Button
+                        <Button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleSaveEdit(chat.id)
@@ -151,9 +155,10 @@ export function Sidebar({
                           aria-label="Save"
                         >
                           <Check className="h-4 w-4 text-green-400" />
-                        </button>
+                        </Button>
                       ) : (
-                        <button
+                        // CHANGED: native button → Base UI Button
+                        <Button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleEditClick(chat)
@@ -162,9 +167,10 @@ export function Sidebar({
                           aria-label="Rename conversation"
                         >
                           <Pencil className="h-4 w-4 text-gray-400" />
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      {/* CHANGED: native button → Base UI Button */}
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation()
                           onDeleteChat(chat.id)
@@ -173,7 +179,7 @@ export function Sidebar({
                         aria-label="Delete conversation"
                       >
                         <X className="h-4 w-4 text-gray-400" />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -185,7 +191,8 @@ export function Sidebar({
         {/* Footer: settings + provider badge + GitHub */}
         <div className="flex-shrink-0 border-t border-gray-800/40">
           {/* Settings button + active provider info */}
-          <button
+          {/* CHANGED: native button → Base UI Button */}
+          <Button
             onClick={onOpenSettings}
             className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors group"
             aria-label="Open LLM provider settings"
@@ -203,7 +210,7 @@ export function Sidebar({
                 <span className="text-xs text-amber-400">No provider configured</span>
               )}
             </div>
-          </button>
+          </Button>
 
           {/* GitHub attribution */}
           <a

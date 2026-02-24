@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useState, useCallback, ReactNode } from 'react'
+import { Button } from '@base-ui/react/button'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { LoadingDots } from './LoadingDots'
@@ -82,7 +83,8 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
                           <span className="text-xs sm:text-sm text-gray-300 truncate max-w-[120px] sm:max-w-none">
                             {language}
                           </span>
-                          <button
+                          {/* CHANGED: native button → Base UI Button */}
+                          <Button
                             onClick={() => handleCopy(code, blockId)}
                             className="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2"
                             title="Copy code"
@@ -92,7 +94,7 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
                             ) : (
                               <Clipboard className="w-4 h-4 sm:w-5 sm:h-5" />
                             )}
-                          </button>
+                          </Button>
                         </div>
                         <div className="overflow-x-auto">
                           <SyntaxHighlighter
@@ -153,7 +155,8 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
           )}
         </div>
         {type === 'ai' && !isLoading && (
-          <button
+          // CHANGED: native button → Base UI Button
+          <Button
             onClick={handleMessageCopy}
             className={cn(
               'absolute bottom-1 left-0 p-1.5 rounded-md transition-colors',
@@ -168,7 +171,7 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
             ) : (
               <Clipboard className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         )}
       </div>
     </motion.div>
