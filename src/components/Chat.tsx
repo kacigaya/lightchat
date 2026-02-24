@@ -10,6 +10,9 @@ import { useStore } from '@/lib/store'
 import { useLLM } from '@/contexts/llm-context'
 import { getModelReasoningEffortOptions, getProvider } from '@/lib/providers'
 import { Send, Settings, AlertTriangle, Globe, Mic, Square, XCircle } from 'lucide-react'
+import { getProvider } from '@/lib/providers'
+import { Send, Settings, AlertTriangle } from 'lucide-react'
+import { Button } from '@base-ui/react/button'
 
 interface ChatProps {
   onOpenSettings: () => void
@@ -218,21 +221,23 @@ export function Chat({ onOpenSettings }: ChatProps) {
             {reasoningEffortOptions.length > 0 && activeReasoningEffort ? ` · ${activeReasoningEffort}` : ''}
           </span>
         ) : (
-          <button
+          // CHANGED: native button → Base UI Button
+          <Button
             onClick={onOpenSettings}
             className="flex items-center gap-1.5 rounded-full bg-amber-900/50 border border-amber-700/50 px-2.5 py-0.5 text-xs text-amber-300 hover:bg-amber-900 transition-colors"
           >
             <AlertTriangle className="h-3 w-3" />
             Configure provider
-          </button>
+          </Button>
         )}
-        <button
+        {/* CHANGED: native button → Base UI Button */}
+        <Button
           onClick={onOpenSettings}
           className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
           aria-label="Open settings"
         >
           <Settings className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
       {supportsWebSearchTool && activeEnableWebSearch && (isLoading || hasActiveWebSearchTool) && (
@@ -256,12 +261,13 @@ export function Chat({ onOpenSettings }: ChatProps) {
                   <p className="text-xs text-amber-400 mb-4">
                     Open Settings to add your API key and select a model.
                   </p>
-                  <button
+                  {/* CHANGED: native button → Base UI Button */}
+                  <Button
                     onClick={onOpenSettings}
                     className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors"
                   >
                     Open Settings
-                  </button>
+                  </Button>
                 </div>
               </>
             ) : (
@@ -315,13 +321,14 @@ export function Chat({ onOpenSettings }: ChatProps) {
             rows={1}
             style={{ maxHeight: '150px' }}
           />
-          <button
+          {/* CHANGED: native button → Base UI Button */}
+          <Button
             type="submit"
             disabled={isLoading || !input.trim() || !isConfigured}
             className="p-3 rounded-2xl bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
         {audioInputEnabled && isRecording && (
           <div className="px-4 pb-3 flex items-center justify-between">
