@@ -6,12 +6,14 @@
  * A full-featured settings panel for choosing an LLM provider, entering API
  * keys, selecting a model, and testing the connection.
  *
- * UI: Tailwind CSS dark theme, matching the rest of the app.
+ * UI: Tailwind CSS dark theme + Base UI headless primitives for accessibility.
  * State: managed entirely through the LLMContext (persisted to localStorage).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useEffect, useState } from 'react'
+import { Dialog } from '@base-ui/react/dialog'
+import { Field } from '@base-ui/react/field'
+import { Input } from '@base-ui/react/input'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -39,18 +41,21 @@ interface Props {
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error'
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const LABEL_CLASS = 'text-sm font-medium text-gray-300'
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+function SelectLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-300 mb-1.5">
+    <label htmlFor={htmlFor} className={`block ${LABEL_CLASS} mb-1.5`}>
       {children}
     </label>
   )
 }
 
-function FieldInput({
-  id,
+function InputWithSlot({
   type = 'text',
   value,
   onChange,
@@ -58,7 +63,6 @@ function FieldInput({
   className,
   rightSlot,
 }: {
-  id?: string
   type?: string
   value: string
   onChange: (v: string) => void
@@ -68,8 +72,7 @@ function FieldInput({
 }) {
   return (
     <div className="relative">
-      <input
-        id={id}
+      <Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -143,31 +146,6 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  // Focus management refs
-  const overlayRef = useRef<HTMLDivElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-  const previousFocusRef = useRef<HTMLElement | null>(null)
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    if (isOpen) document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [isOpen, onClose])
-
-  // Focus management: focus first interactive element on open; restore on close
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = document.activeElement as HTMLElement
-      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      )
-      firstFocusable?.focus()
-    } else {
-      previousFocusRef.current?.focus()
-    }
-  }, [isOpen])
-
   // ── Actions ───────────────────────────────────────────────────────────────
 
   const handleSave = useCallback(() => {
@@ -234,43 +212,30 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   const hasApiKey = draftApiKey.trim().length > 0
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          ref={overlayRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === overlayRef.current) onClose()
-          }}
-        >
-          <motion.div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: 0.18 }}
-            className="relative w-full max-w-lg rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl"
-          >
+    <Dialog.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setDraftKeyRemoved(false)
+          onClose()
+        }
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl transition-all duration-[180ms] data-[starting-style]:opacity-0 data-[starting-style]:scale-[0.96] data-[ending-style]:opacity-0 data-[ending-style]:scale-[0.96]">
             {/* ── Header ── */}
             <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
               <div className="flex items-center gap-2 text-white">
                 <Lock className="h-4 w-4 text-primary-400" />
-                <h2 id="modal-title" className="text-base font-semibold">LLM Provider Settings</h2>
+                <Dialog.Title className="text-base font-semibold">LLM Provider Settings</Dialog.Title>
               </div>
-              <button
-                onClick={onClose}
+              <Dialog.Close
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
                 aria-label="Close settings"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Dialog.Close>
             </div>
 
             {/* ── Body ── */}
@@ -289,7 +254,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               {/* Provider selector */}
               <div>
-                <Label htmlFor="provider-select">Provider</Label>
+                <SelectLabel htmlFor="provider-select">Provider</SelectLabel>
                 <div className="relative">
                   <select
                     id="provider-select"
@@ -321,9 +286,11 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               )}
 
               {/* API Key */}
-              <div>
+              <Field.Root>
                 <div className="flex items-center justify-between mb-1.5">
-                  <Label htmlFor="api-key-input">{draftProvider?.apiKeyLabel ?? 'API Key'}</Label>
+                  <Field.Label className={LABEL_CLASS}>
+                    {draftProvider?.apiKeyLabel ?? 'API Key'}
+                  </Field.Label>
                   {draftProvider?.docsUrl && (
                     <a
                       href={draftProvider.docsUrl}
@@ -335,8 +302,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     </a>
                   )}
                 </div>
-                <FieldInput
-                  id="api-key-input"
+                <InputWithSlot
                   type={showKey ? 'text' : 'password'}
                   value={draftApiKey}
                   onChange={(v) => {
@@ -366,17 +332,16 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     Remove key
                   </button>
                 )}
-              </div>
+              </Field.Root>
 
               {/* Extra config fields (Azure, Bedrock, Vertex, OpenAI-compatible…) */}
               {(draftProvider?.extraConfigFields ?? []).map((field) => (
-                <div key={field.key}>
-                  <Label htmlFor={`extra-${field.key}`}>
+                <Field.Root key={field.key}>
+                  <Field.Label className={`block ${LABEL_CLASS} mb-1.5`}>
                     {field.label}
                     {field.required && <span className="ml-1 text-red-400">*</span>}
-                  </Label>
-                  <FieldInput
-                    id={`extra-${field.key}`}
+                  </Field.Label>
+                  <InputWithSlot
                     type={field.type}
                     value={draftExtraConfig[field.key] ?? ''}
                     onChange={(v) => {
@@ -385,13 +350,13 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     }}
                     placeholder={field.placeholder}
                   />
-                </div>
+                </Field.Root>
               ))}
 
               {/* Model selector */}
               {(draftProvider?.models.length ?? 0) > 0 ? (
                 <div>
-                  <Label htmlFor="model-select">Model</Label>
+                  <SelectLabel htmlFor="model-select">Model</SelectLabel>
                   <div className="relative">
                     <select
                       id="model-select"
@@ -415,10 +380,11 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 /* Only show free-form model input when no extraConfigFields covers modelId.
                    OpenAI-compatible providers expose modelId via extraConfigFields instead. */
                 !(draftProvider?.extraConfigFields ?? []).some((f) => f.key === 'modelId') && (
-                  <div>
-                    <Label htmlFor="model-free">Model ID</Label>
-                    <FieldInput
-                      id="model-free"
+                  <Field.Root>
+                    <Field.Label className={`block ${LABEL_CLASS} mb-1.5`}>
+                      Model ID
+                    </Field.Label>
+                    <InputWithSlot
                       value={draftModel}
                       onChange={(v) => {
                         setDraftModel(v)
@@ -426,7 +392,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                       }}
                       placeholder="e.g. gpt-4o or llama-3"
                     />
-                  </div>
+                  </Field.Root>
                 )
               )}
 
@@ -466,12 +432,11 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               </button>
 
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => { setDraftKeyRemoved(false); onClose() }}
+                <Dialog.Close
                   className="rounded-lg px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   Cancel
-                </button>
+                </Dialog.Close>
                 <button
                   onClick={handleSave}
                   className={cn(
@@ -491,9 +456,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 </button>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
   )
 }
