@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     )
   }
 
-  if (!model) {
+  if (!model && !extraConfig.modelId) {
     return Response.json({ error: 'No model specified.' }, { status: 400 })
   }
 
@@ -56,11 +56,20 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse()
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
+    const errName = err instanceof Error ? err.name : ''
     // Surface provider authentication / quota errors as 4xx so the client
     // can show them directly to the user.
-    const status = message.toLowerCase().includes('auth') || message.toLowerCase().includes('key')
-      ? 401
-      : 500
+    let status: number
+    if (message.toLowerCase().includes('auth') || message.toLowerCase().includes('key')) {
+      status = 401
+    } else if (
+      errName === 'ValidationError' ||
+      /invalid|malformed|required|missing/i.test(message)
+    ) {
+      status = 400
+    } else {
+      status = 500
+    }
     return Response.json({ error: message }, { status })
   }
 }

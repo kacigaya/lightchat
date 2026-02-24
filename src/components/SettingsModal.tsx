@@ -97,7 +97,6 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     setActiveProvider,
     updateProviderSettings,
     removeProviderKey,
-    testConnection,
   } = useLLM()
 
   // ── Local "draft" state so changes are only applied on Save ───────────────
@@ -118,6 +117,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
   const [testError, setTestError] = useState('')
   const [isSaved, setIsSaved] = useState(false)
+  const [draftKeyRemoved, setDraftKeyRemoved] = useState(false)
 
   // Re-sync draft when user switches provider in the dropdown
   const syncDraft = useCallback(
@@ -132,6 +132,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       setTestError('')
       setIsSaved(false)
       setShowKey(false)
+      setDraftKeyRemoved(false)
     },
     [settings],
   )
@@ -142,8 +143,10 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
-  // Close on Escape
+  // Focus management refs
   const overlayRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -152,11 +155,28 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     return () => document.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
+  // Focus management: focus first interactive element on open; restore on close
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement
+      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      firstFocusable?.focus()
+    } else {
+      previousFocusRef.current?.focus()
+    }
+  }, [isOpen])
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
   const handleSave = useCallback(() => {
     // Commit draft to context (which persists to localStorage)
     setActiveProvider(draftProviderId)
+    if (draftKeyRemoved) {
+      removeProviderKey(draftProviderId)
+      setDraftKeyRemoved(false)
+    }
     updateProviderSettings(draftProviderId, {
       apiKey: draftApiKey,
       model: draftModel,
@@ -164,44 +184,49 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     })
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2000)
-  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, setActiveProvider, updateProviderSettings])
+  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, draftKeyRemoved, setActiveProvider, updateProviderSettings, removeProviderKey])
 
   const handleRemoveKey = useCallback(() => {
     setDraftApiKey('')
-    removeProviderKey(draftProviderId)
     setTestStatus('idle')
-  }, [draftProviderId, removeProviderKey])
+    setDraftKeyRemoved(true)
+  }, [])
 
   const handleTest = useCallback(async () => {
-    // Save first so testConnection uses the latest values
-    setActiveProvider(draftProviderId)
-    updateProviderSettings(draftProviderId, {
-      apiKey: draftApiKey,
-      model: draftModel,
-      extraConfig: draftExtraConfig,
-    })
-
     setTestStatus('testing')
     setTestError('')
 
-    // Small delay so the context has time to flush
+    // Small delay to allow any pending state updates to flush
     await new Promise((r) => setTimeout(r, 50))
 
-    const result = await testConnection()
-    if (result.success) {
-      setTestStatus('success')
-    } else {
+    // Test directly with current draft values to avoid stale closure over active* state
+    try {
+      const res = await fetch('/api/chat/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: draftProviderId,
+          apiKey: draftApiKey,
+          model: draftModel,
+          extraConfig: draftExtraConfig,
+        }),
+      })
+      const data = (await res.json()) as { success?: boolean; error?: string }
+      if (res.ok && data.success) {
+        setTestStatus('success')
+      } else {
+        setTestStatus('error')
+        setTestError(data.error ?? `HTTP ${res.status}`)
+      }
+    } catch (err) {
       setTestStatus('error')
-      setTestError(result.error ?? 'Unknown error')
+      setTestError(`Network error: ${String(err)}`)
     }
   }, [
     draftProviderId,
     draftApiKey,
     draftModel,
     draftExtraConfig,
-    setActiveProvider,
-    updateProviderSettings,
-    testConnection,
   ])
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -223,6 +248,10 @@ export function SettingsModal({ isOpen, onClose }: Props) {
           }}
         >
           <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
@@ -233,7 +262,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
             <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
               <div className="flex items-center gap-2 text-white">
                 <Lock className="h-4 w-4 text-primary-400" />
-                <h2 className="text-base font-semibold">LLM Provider Settings</h2>
+                <h2 id="modal-title" className="text-base font-semibold">LLM Provider Settings</h2>
               </div>
               <button
                 onClick={onClose}
@@ -383,20 +412,22 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   </div>
                 </div>
               ) : (
-                /* OpenAI-compatible has no pre-populated models; the model ID
-                   is entered via the extraConfigFields "modelId" field. */
-                <div>
-                  <Label htmlFor="model-free">Model ID</Label>
-                  <FieldInput
-                    id="model-free"
-                    value={draftModel}
-                    onChange={(v) => {
-                      setDraftModel(v)
-                      setTestStatus('idle')
-                    }}
-                    placeholder="e.g. gpt-4o or llama-3"
-                  />
-                </div>
+                /* Only show free-form model input when no extraConfigFields covers modelId.
+                   OpenAI-compatible providers expose modelId via extraConfigFields instead. */
+                !(draftProvider?.extraConfigFields ?? []).some((f) => f.key === 'modelId') && (
+                  <div>
+                    <Label htmlFor="model-free">Model ID</Label>
+                    <FieldInput
+                      id="model-free"
+                      value={draftModel}
+                      onChange={(v) => {
+                        setDraftModel(v)
+                        setTestStatus('idle')
+                      }}
+                      placeholder="e.g. gpt-4o or llama-3"
+                    />
+                  </div>
+                )
               )}
 
               {/* Test connection result */}
@@ -436,7 +467,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={onClose}
+                  onClick={() => { setDraftKeyRemoved(false); onClose() }}
                   className="rounded-lg px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
                 >
                   Cancel

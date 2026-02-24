@@ -1,7 +1,7 @@
 /**
  * POST /api/chat/test
  * ───────────────────
- * Fires a minimal generateText call (maxTokens: 1) to verify that the
+ * Fires a minimal generateText call (maxOutputTokens: 5) to verify that the
  * supplied credentials are valid.  Returns { success: true } or
  * { error: "…" } with an appropriate HTTP status code.
  */

@@ -97,7 +97,8 @@ export function getModel({
       const baseURL = extraConfig.baseURL
       if (!baseURL) throw new Error('OpenAI-compatible provider requires a base URL.')
       // If no explicit model was provided, fall back to the modelId extra field
-      const effectiveModel = model || extraConfig.modelId || 'default'
+      const effectiveModel = model || extraConfig.modelId
+      if (!effectiveModel) throw new Error('openai-compatible provider requires a model or extraConfig.modelId')
       return createOpenAI({ apiKey, baseURL })(effectiveModel)
     }
 
@@ -119,8 +120,12 @@ export function getModel({
       const project = extraConfig.project
       const location = extraConfig.location || 'us-central1'
       if (!project) throw new Error('Google Vertex AI requires a GCP Project ID.')
+      if (extraConfig.apiKey) {
+        throw new Error(
+          'google-vertex does not support an API key. createVertex uses Application Default Credentials (ADC) or explicit googleAuthOptions/service-account credentials. Remove the API key and configure ADC instead.',
+        )
+      }
       // Uses Application Default Credentials (ADC) from the environment.
-      // An explicit API key is optional and rarely needed.
       return createVertex({ project, location })(model)
     }
 

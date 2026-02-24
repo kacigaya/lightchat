@@ -97,10 +97,30 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY)
-      if (raw) setSettings(JSON.parse(raw) as LLMSettings)
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw)
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed) &&
+          Object.values(parsed as Record<string, unknown>).every(
+            (entry) =>
+              entry !== null &&
+              typeof entry === 'object' &&
+              typeof (entry as Record<string, unknown>).apiKey === 'string' &&
+              typeof (entry as Record<string, unknown>).model === 'string' &&
+              typeof (entry as Record<string, unknown>).extraConfig === 'object',
+          )
+        ) {
+          setSettings(parsed as LLMSettings)
+        }
+        // If validation fails, fall back to defaults silently
+      }
 
       const storedProvider = localStorage.getItem(ACTIVE_PROVIDER_KEY)
-      if (storedProvider) setActiveProviderIdState(storedProvider)
+      if (storedProvider && typeof storedProvider === 'string' && storedProvider.length > 0) {
+        setActiveProviderIdState(storedProvider)
+      }
     } catch {
       // localStorage unavailable or corrupt – fall back to defaults silently
     }

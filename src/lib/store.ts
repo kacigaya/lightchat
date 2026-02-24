@@ -55,7 +55,7 @@ export const useStore = create<ChatStore>()(
           return {
             conversations: remaining,
             currentConversation:
-              state.currentConversation === id ? null : state.currentConversation,
+              state.currentConversation === id ? remaining[0].id : state.currentConversation,
           }
         })
       },
