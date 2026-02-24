@@ -15,6 +15,8 @@ Live demo: [https://lightchat-two.vercel.app](https://lightchat-two.vercel.app)
 - Markdown rendering with syntax-highlighted code blocks
 - Dark mode UI
 - Mobile-friendly layout
+- Optional web search tool (Tavily-backed with `TAVILY_API_KEY`)
+- Optional browser speech-to-text input
 
 ---
 
@@ -69,7 +71,8 @@ Live demo: [https://lightchat-two.vercel.app](https://lightchat-two.vercel.app)
 
 4. Open [http://localhost:3000](http://localhost:3000), click the **Settings** button in the sidebar, choose a provider, and enter your API key.
 
-> **No `.env` file is required.** API keys are entered in the UI and stored in browser `localStorage`.
+> **No `.env` file is required** for normal chat usage.  
+> If you enable **Web Search** in Settings, configure `TAVILY_API_KEY` on the server to power the `web_search` tool.
 
 ---
 

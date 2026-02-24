@@ -37,6 +37,8 @@ export interface ProviderSettings {
    * Examples: { resourceName: "my-azure" }, { baseURL: "https://…" }
    */
   extraConfig: Record<string, string>
+  enableWebSearch?: boolean
+  reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh'
 }
 
 /** Keyed by provider ID, e.g. { openai: { apiKey: "sk-…", model: "gpt-4o", extraConfig: {} } } */
@@ -60,6 +62,12 @@ export interface LLMContextValue {
   settings: LLMSettings
   /** True when the active provider has a non-empty API key (or ADC-based) */
   isConfigured: boolean
+  /** Web search toggle for the active provider */
+  activeEnableWebSearch: boolean
+  /** Reasoning effort for the active provider/model */
+  activeReasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh'
+  /** Global browser speech-input toggle */
+  audioInputEnabled: boolean
 
   /** Switch the active provider; pre-selects its first model if none saved */
   setActiveProvider: (providerId: string) => void
@@ -69,6 +77,8 @@ export interface LLMContextValue {
   removeProviderKey: (providerId: string) => void
   /** Return saved settings for any provider */
   getProviderSettings: (providerId: string) => ProviderSettings | undefined
+  /** Toggle global browser speech-input */
+  setAudioInputEnabled: (enabled: boolean) => void
 
   /**
    * Fires a lightweight POST /api/chat/test request with the current config.
@@ -81,6 +91,7 @@ export interface LLMContextValue {
 
 const SETTINGS_KEY = 'lightchat-llm-settings'
 const ACTIVE_PROVIDER_KEY = 'lightchat-active-provider'
+const AUDIO_INPUT_ENABLED_KEY = 'lightchat-audio-input-enabled'
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +102,7 @@ const LLMContext = createContext<LLMContextValue | null>(null)
 export function LLMProvider({ children }: { children: React.ReactNode }) {
   const [activeProviderId, setActiveProviderIdState] = useState<string>(DEFAULT_PROVIDER_ID)
   const [settings, setSettings] = useState<LLMSettings>({})
+  const [audioInputEnabled, setAudioInputEnabledState] = useState(true)
   const [hydrated, setHydrated] = useState(false)
 
   // Load from localStorage on first mount
@@ -109,7 +121,13 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
               typeof entry === 'object' &&
               typeof (entry as Record<string, unknown>).apiKey === 'string' &&
               typeof (entry as Record<string, unknown>).model === 'string' &&
-              typeof (entry as Record<string, unknown>).extraConfig === 'object',
+              typeof (entry as Record<string, unknown>).extraConfig === 'object' &&
+              ((entry as Record<string, unknown>).enableWebSearch === undefined ||
+                typeof (entry as Record<string, unknown>).enableWebSearch === 'boolean') &&
+              ((entry as Record<string, unknown>).reasoningEffort === undefined ||
+                ['low', 'medium', 'high', 'xhigh'].includes(
+                  String((entry as Record<string, unknown>).reasoningEffort),
+                )),
           )
         ) {
           setSettings(parsed as LLMSettings)
@@ -120,6 +138,11 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
       const storedProvider = localStorage.getItem(ACTIVE_PROVIDER_KEY)
       if (storedProvider && typeof storedProvider === 'string' && storedProvider.length > 0) {
         setActiveProviderIdState(storedProvider)
+      }
+
+      const storedAudioInputEnabled = localStorage.getItem(AUDIO_INPUT_ENABLED_KEY)
+      if (storedAudioInputEnabled === 'true' || storedAudioInputEnabled === 'false') {
+        setAudioInputEnabledState(storedAudioInputEnabled === 'true')
       }
     } catch {
       // localStorage unavailable or corrupt – fall back to defaults silently
@@ -147,6 +170,15 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeProviderId, hydrated])
 
+  useEffect(() => {
+    if (!hydrated) return
+    try {
+      localStorage.setItem(AUDIO_INPUT_ENABLED_KEY, String(audioInputEnabled))
+    } catch {
+      // ignore
+    }
+  }, [audioInputEnabled, hydrated])
+
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const setActiveProvider = useCallback(
@@ -157,12 +189,14 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
       if (provider && provider.models.length > 0 && !settings[providerId]?.model) {
         setSettings((prev) => ({
           ...prev,
-          [providerId]: {
-            apiKey: prev[providerId]?.apiKey ?? '',
-            model: provider.models[0].id,
-            extraConfig: prev[providerId]?.extraConfig ?? {},
-          },
-        }))
+            [providerId]: {
+              apiKey: prev[providerId]?.apiKey ?? '',
+              model: provider.models[0].id,
+              extraConfig: prev[providerId]?.extraConfig ?? {},
+              enableWebSearch: prev[providerId]?.enableWebSearch ?? false,
+              reasoningEffort: prev[providerId]?.reasoningEffort,
+            },
+          }))
       }
     },
     [settings],
@@ -186,6 +220,12 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
             model: existing?.model ?? defaultModel,
             ...partial,
             extraConfig: mergedExtraConfig,
+            enableWebSearch:
+              partial.enableWebSearch ?? existing?.enableWebSearch ?? false,
+            reasoningEffort:
+              'reasoningEffort' in partial
+                ? partial.reasoningEffort
+                : existing?.reasoningEffort,
           },
         }
       })
@@ -201,6 +241,8 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
         apiKey: '',
         extraConfig: prev[providerId]?.extraConfig ?? {},
         model: prev[providerId]?.model ?? '',
+        enableWebSearch: prev[providerId]?.enableWebSearch ?? false,
+        reasoningEffort: prev[providerId]?.reasoningEffort,
       },
     }))
   }, [])
@@ -218,6 +260,8 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
   const activeProvider = getProvider(activeProviderId)
   const activeModel =
     activeSettings?.model ?? (activeProvider?.models[0]?.id ?? '')
+  const activeEnableWebSearch = activeSettings?.enableWebSearch ?? false
+  const activeReasoningEffort = activeSettings?.reasoningEffort
 
   // Vertex can use Application Default Credentials without an explicit key
   const isConfigured =
@@ -257,10 +301,14 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
     activeExtraConfig,
     settings,
     isConfigured,
+    activeEnableWebSearch,
+    activeReasoningEffort,
+    audioInputEnabled,
     setActiveProvider,
     updateProviderSettings,
     removeProviderKey,
     getProviderSettings,
+    setAudioInputEnabled: setAudioInputEnabledState,
     testConnection,
   }
 

@@ -1,5 +1,7 @@
-import { streamText, convertToModelMessages } from 'ai'
-import { getModel } from '../_model-factory'
+import { streamText, convertToModelMessages, tool } from 'ai'
+import { z } from 'zod'
+import { getProvider } from '@/lib/providers'
+import { getModel, getReasoningProviderOptions } from '../_model-factory'
 
 export const runtime = 'nodejs'
 
@@ -10,6 +12,8 @@ export async function POST(req: Request) {
     apiKey?: string
     model?: string
     extraConfig?: Record<string, string>
+    enableWebSearch?: boolean
+    reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh'
   }
 
   try {
@@ -24,6 +28,8 @@ export async function POST(req: Request) {
     apiKey = '',
     model = '',
     extraConfig = {},
+    enableWebSearch = false,
+    reasoningEffort,
   } = body
 
   if (!apiKey && provider !== 'google-vertex') {
@@ -47,10 +53,65 @@ export async function POST(req: Request) {
 
   try {
     const modelMessages = await convertToModelMessages(messages as Parameters<typeof convertToModelMessages>[0])
+    const providerOptions = getReasoningProviderOptions({ provider, model, reasoningEffort })
+    const providerSupportsTools = Boolean(getProvider(provider)?.supportsTools)
+    const tools =
+      enableWebSearch && providerSupportsTools
+        ? {
+            web_search: tool({
+              description: 'Search the web for up-to-date information.',
+              inputSchema: z.object({
+                query: z.string().min(2),
+              }),
+              execute: async ({ query }) => {
+                const tavilyApiKey = process.env.TAVILY_API_KEY
+                if (!tavilyApiKey) {
+                  return {
+                    error:
+                      'Web search is unavailable because TAVILY_API_KEY is not configured on the server.',
+                  }
+                }
+
+                const tavilyResponse = await fetch('https://api.tavily.com/search', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    api_key: tavilyApiKey,
+                    query,
+                    search_depth: 'advanced',
+                    max_results: 5,
+                  }),
+                })
+
+                if (!tavilyResponse.ok) {
+                  throw new Error(`Web search failed (${tavilyResponse.status}).`)
+                }
+
+                const tavilyData = (await tavilyResponse.json()) as {
+                  answer?: string
+                  results?: Array<{ title?: string; url?: string; content?: string }>
+                }
+
+                return {
+                  answer: tavilyData.answer ?? '',
+                  results: (tavilyData.results ?? []).map((result) => ({
+                    title: result.title ?? '',
+                    url: result.url ?? '',
+                    content: result.content ?? '',
+                  })),
+                }
+              },
+            }),
+          }
+        : undefined
 
     const result = streamText({
       model: modelInstance,
       messages: modelMessages,
+      tools,
+      providerOptions: providerOptions as Parameters<typeof streamText>[0]['providerOptions'],
     })
 
     return result.toUIMessageStreamResponse()
