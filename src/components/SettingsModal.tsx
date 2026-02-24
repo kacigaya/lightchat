@@ -41,17 +41,21 @@ interface Props {
 
 type TestStatus = 'idle' | 'testing' | 'success' | 'error'
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const LABEL_CLASS = 'text-sm font-medium text-gray-300'
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function SelectLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-gray-300 mb-1.5">
+    <label htmlFor={htmlFor} className={`block ${LABEL_CLASS} mb-1.5`}>
       {children}
     </label>
   )
 }
 
-function StyledInput({
+function InputWithSlot({
   type = 'text',
   value,
   onChange,
@@ -284,7 +288,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               {/* API Key */}
               <Field.Root>
                 <div className="flex items-center justify-between mb-1.5">
-                  <Field.Label className="text-sm font-medium text-gray-300">
+                  <Field.Label className={LABEL_CLASS}>
                     {draftProvider?.apiKeyLabel ?? 'API Key'}
                   </Field.Label>
                   {draftProvider?.docsUrl && (
@@ -298,7 +302,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     </a>
                   )}
                 </div>
-                <StyledInput
+                <InputWithSlot
                   type={showKey ? 'text' : 'password'}
                   value={draftApiKey}
                   onChange={(v) => {
@@ -333,11 +337,11 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               {/* Extra config fields (Azure, Bedrock, Vertex, OpenAI-compatible…) */}
               {(draftProvider?.extraConfigFields ?? []).map((field) => (
                 <Field.Root key={field.key}>
-                  <Field.Label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  <Field.Label className={`block ${LABEL_CLASS} mb-1.5`}>
                     {field.label}
                     {field.required && <span className="ml-1 text-red-400">*</span>}
                   </Field.Label>
-                  <StyledInput
+                  <InputWithSlot
                     type={field.type}
                     value={draftExtraConfig[field.key] ?? ''}
                     onChange={(v) => {
@@ -377,10 +381,10 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                    OpenAI-compatible providers expose modelId via extraConfigFields instead. */
                 !(draftProvider?.extraConfigFields ?? []).some((f) => f.key === 'modelId') && (
                   <Field.Root>
-                    <Field.Label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    <Field.Label className={`block ${LABEL_CLASS} mb-1.5`}>
                       Model ID
                     </Field.Label>
-                    <StyledInput
+                    <InputWithSlot
                       value={draftModel}
                       onChange={(v) => {
                         setDraftModel(v)
