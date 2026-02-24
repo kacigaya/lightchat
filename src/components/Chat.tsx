@@ -10,9 +10,6 @@ import { useStore } from '@/lib/store'
 import { useLLM } from '@/contexts/llm-context'
 import { getModelReasoningEffortOptions, getProvider } from '@/lib/providers'
 import { Send, Settings, AlertTriangle, Globe, Mic, Square, XCircle } from 'lucide-react'
-import { getProvider } from '@/lib/providers'
-import { Send, Settings, AlertTriangle } from 'lucide-react'
-import { Button } from '@base-ui/react/button'
 
 interface ChatProps {
   onOpenSettings: () => void
