@@ -26,6 +26,10 @@ type BrowserSpeechRecognition = {
   stop: () => void
 }
 
+function hasSelectedFiles(files: FileList | null): files is FileList {
+  return files !== null && files.length > 0
+}
+
 export function Chat({ onOpenSettings }: ChatProps) {
   const [input, setInput] = useState('')
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
@@ -120,20 +124,16 @@ export function Chat({ onOpenSettings }: ChatProps) {
     async (e: React.FormEvent) => {
       e.preventDefault()
       const hasText = Boolean(input.trim())
-      const hasFiles = Boolean(selectedFiles?.length)
+      const hasFiles = hasSelectedFiles(selectedFiles)
       if ((!hasText && !hasFiles) || isLoading || !isConfigured) return
-      if (hasText && hasFiles && selectedFiles) {
-        await sendMessage({ text: input, files: selectedFiles })
-      } else if (hasText) {
-        await sendMessage({ text: input })
-      } else if (selectedFiles) {
+      if (hasText) {
+        await sendMessage(hasFiles ? { text: input, files: selectedFiles } : { text: input })
+      } else if (hasFiles && selectedFiles) {
         await sendMessage({ files: selectedFiles })
       }
       setInput('')
       setSelectedFiles(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ''
     },
     [input, isLoading, isConfigured, selectedFiles, sendMessage],
   )
@@ -315,7 +315,8 @@ export function Chat({ onOpenSettings }: ChatProps) {
             type="file"
             accept="image/*,.pdf"
             multiple
-            onChange={(e) => setSelectedFiles(e.target.files && e.target.files.length > 0 ? e.target.files : null)}
+            onChange={(e) => setSelectedFiles(e.target.files)}
+            aria-label="Select images or PDF files"
             className="hidden"
           />
           <Button
@@ -323,7 +324,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
             disabled={!isConfigured || isLoading}
             onClick={() => fileInputRef.current?.click()}
             className="p-3 rounded-2xl border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-            aria-label="Import images or PDF"
+            aria-label="Import images or PDF files"
           >
             <Paperclip className="h-5 w-5" />
           </Button>
@@ -352,7 +353,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
           {/* CHANGED: native button → Base UI Button */}
           <Button
             type="submit"
-            disabled={isLoading || (!input.trim() && !selectedFiles?.length) || !isConfigured}
+            disabled={isLoading || (!input.trim() && !hasSelectedFiles(selectedFiles)) || !isConfigured}
             className="p-3 rounded-2xl bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="h-5 w-5" />
