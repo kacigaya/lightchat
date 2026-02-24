@@ -33,6 +33,12 @@ export interface ModelFactoryParams {
   extraConfig?: Record<string, string>
 }
 
+interface ReasoningOptionsParams {
+  provider: string
+  model: string
+  reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh'
+}
+
 /**
  * Returns a LanguageModelV1 ready for use with streamText / generateText.
  * Throws an Error with a user-readable message on misconfiguration.
@@ -132,4 +138,28 @@ export function getModel({
     default:
       throw new Error(`Unsupported provider: "${provider}". Check your settings.`)
   }
+}
+
+export function getReasoningProviderOptions({
+  provider,
+  model,
+  reasoningEffort,
+}: ReasoningOptionsParams): Record<string, unknown> | undefined {
+  if (!reasoningEffort || !model) return undefined
+
+  if (provider === 'openai') {
+    return { openai: { reasoningEffort } }
+  }
+
+  if ((provider === 'google' || provider === 'google-vertex') && model.startsWith('gemini-3')) {
+    return {
+      google: {
+        thinkingConfig: {
+          thinkingLevel: reasoningEffort === 'xhigh' ? 'high' : reasoningEffort,
+        },
+      },
+    }
+  }
+
+  return undefined
 }

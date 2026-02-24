@@ -5,6 +5,7 @@
 export interface ModelInfo {
   id: string
   name: string
+  reasoningEffortOptions?: Array<'low' | 'medium' | 'high' | 'xhigh'>
 }
 
 export interface ExtraConfigField {
@@ -37,6 +38,7 @@ export interface ProviderConfig {
    * (e.g. AWS IAM, GCP service accounts).  The UI shows a warning.
    */
   requiresCloudCredentials?: boolean
+  supportsTools?: boolean
 }
 
 export const PROVIDERS: ProviderConfig[] = [
@@ -49,14 +51,19 @@ export const PROVIDERS: ProviderConfig[] = [
       { id: 'gpt-4o', name: 'GPT-4o' },
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
       { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-      { id: 'o1', name: 'o1' },
-      { id: 'o1-mini', name: 'o1-mini' },
-      { id: 'o3-mini', name: 'o3-mini' },
+      { id: 'gpt-5.3-codex', name: 'GPT-5.3 Codex', reasoningEffortOptions: ['low', 'medium', 'high', 'xhigh'] },
+      { id: 'gpt-5.2', name: 'GPT-5.2', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'gpt-5', name: 'GPT-5', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'gpt-5-mini', name: 'GPT-5 Mini', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'o1', name: 'o1', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'o1-mini', name: 'o1-mini', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'o3-mini', name: 'o3-mini', reasoningEffortOptions: ['low', 'medium', 'high'] },
       { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
     ],
     apiKeyLabel: 'OpenAI API Key',
     apiKeyPlaceholder: 'sk-…',
     docsUrl: 'https://platform.openai.com/api-keys',
+    supportsTools: true,
   },
   {
     id: 'anthropic',
@@ -78,12 +85,15 @@ export const PROVIDERS: ProviderConfig[] = [
     models: [
       { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
       { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash Preview' },
+      { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', reasoningEffortOptions: ['low', 'medium', 'high'] },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', reasoningEffortOptions: ['low', 'medium', 'high'] },
       { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
       { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
     ],
     apiKeyLabel: 'Google AI API Key',
     apiKeyPlaceholder: 'AIza…',
     docsUrl: 'https://aistudio.google.com/app/apikey',
+    supportsTools: true,
   },
   {
     id: 'xai',
@@ -351,6 +361,14 @@ export const PROVIDER_MAP = Object.fromEntries(PROVIDERS.map((p) => [p.id, p])) 
 
 export function getProvider(id: string): ProviderConfig | undefined {
   return PROVIDER_MAP[id]
+}
+
+export function getModelReasoningEffortOptions(
+  providerId: string,
+  modelId: string,
+): Array<'low' | 'medium' | 'high' | 'xhigh'> {
+  const model = getProvider(providerId)?.models.find((entry) => entry.id === modelId)
+  return model?.reasoningEffortOptions ?? []
 }
 
 export const DEFAULT_PROVIDER_ID = 'google'

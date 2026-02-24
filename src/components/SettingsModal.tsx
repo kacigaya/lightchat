@@ -14,8 +14,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { Field } from '@base-ui/react/field'
 import { Input } from '@base-ui/react/input'
+import { Switch } from '@base-ui/react/switch'
 import {
   AlertTriangle,
+  Brain,
   CheckCircle2,
   ChevronDown,
   ExternalLink,
@@ -30,7 +32,12 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLLM } from '@/contexts/llm-context'
-import { PROVIDERS, getProvider, type ProviderConfig } from '@/lib/providers'
+import {
+  PROVIDERS,
+  getModelReasoningEffortOptions,
+  getProvider,
+  type ProviderConfig,
+} from '@/lib/providers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +104,9 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   const {
     activeProviderId,
     settings,
+    audioInputEnabled,
     setActiveProvider,
+    setAudioInputEnabled,
     updateProviderSettings,
     removeProviderKey,
   } = useLLM()
@@ -115,6 +124,13 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   const [draftExtraConfig, setDraftExtraConfig] = useState<Record<string, string>>(
     draftSaved?.extraConfig ?? {},
   )
+  const [draftEnableWebSearch, setDraftEnableWebSearch] = useState(
+    draftSaved?.enableWebSearch ?? false,
+  )
+  const [draftReasoningEffort, setDraftReasoningEffort] = useState<
+    'low' | 'medium' | 'high' | 'xhigh' | ''
+  >(draftSaved?.reasoningEffort ?? '')
+  const [draftAudioInputEnabled, setDraftAudioInputEnabled] = useState(audioInputEnabled)
 
   const [showKey, setShowKey] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
@@ -131,13 +147,16 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       setDraftApiKey(saved?.apiKey ?? '')
       setDraftModel(saved?.model ?? provider?.models[0]?.id ?? '')
       setDraftExtraConfig(saved?.extraConfig ?? {})
+      setDraftEnableWebSearch(saved?.enableWebSearch ?? false)
+      setDraftReasoningEffort(saved?.reasoningEffort ?? '')
+      setDraftAudioInputEnabled(audioInputEnabled)
       setTestStatus('idle')
       setTestError('')
       setIsSaved(false)
       setShowKey(false)
       setDraftKeyRemoved(false)
     },
-    [settings],
+    [settings, audioInputEnabled],
   )
 
   // Re-sync when modal opens
@@ -159,10 +178,13 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       apiKey: draftApiKey,
       model: draftModel,
       extraConfig: draftExtraConfig,
+      enableWebSearch: draftEnableWebSearch,
+      reasoningEffort: draftReasoningEffort || undefined,
     })
+    setAudioInputEnabled(draftAudioInputEnabled)
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2000)
-  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, draftKeyRemoved, setActiveProvider, updateProviderSettings, removeProviderKey])
+  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, draftEnableWebSearch, draftReasoningEffort, draftAudioInputEnabled, draftKeyRemoved, setActiveProvider, setAudioInputEnabled, updateProviderSettings, removeProviderKey])
 
   const handleRemoveKey = useCallback(() => {
     setDraftApiKey('')
@@ -210,6 +232,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
   // ── Render ────────────────────────────────────────────────────────────────
 
   const hasApiKey = draftApiKey.trim().length > 0
+  const reasoningEffortOptions = getModelReasoningEffortOptions(draftProviderId, draftModel)
 
   return (
     <Dialog.Root
@@ -363,6 +386,20 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                       value={draftModel}
                       onChange={(e) => {
                         setDraftModel(e.target.value)
+                        const nextOptions = getModelReasoningEffortOptions(
+                          draftProviderId,
+                          e.target.value,
+                        )
+                        if (nextOptions.length === 0) {
+                          setDraftReasoningEffort('')
+                        } else if (
+                          !draftReasoningEffort ||
+                          !nextOptions.includes(draftReasoningEffort as 'low' | 'medium' | 'high' | 'xhigh')
+                        ) {
+                          setDraftReasoningEffort(
+                            nextOptions.includes('medium') ? 'medium' : nextOptions[0],
+                          )
+                        }
                         setTestStatus('idle')
                       }}
                       className="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 pr-9 text-sm text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
@@ -395,6 +432,75 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   </Field.Root>
                 )
               )}
+
+              {/* Advanced model/runtime options */}
+              <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-850/40 px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Advanced</p>
+
+                <Field.Root>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <Field.Label className={LABEL_CLASS}>Enable Web Search</Field.Label>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Allow supported models to call the <code>web_search</code> tool.
+                      </p>
+                    </div>
+                    <Switch.Root
+                      checked={draftEnableWebSearch}
+                      onCheckedChange={setDraftEnableWebSearch}
+                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
+                    >
+                      <Switch.Thumb className="h-4 w-4 translate-x-1 rounded-full bg-white transition-transform data-[checked]:translate-x-5" />
+                    </Switch.Root>
+                  </div>
+                </Field.Root>
+
+                <Field.Root>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <Field.Label className={LABEL_CLASS}>Enable Audio Input</Field.Label>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Show microphone controls and use browser speech recognition.
+                      </p>
+                    </div>
+                    <Switch.Root
+                      checked={draftAudioInputEnabled}
+                      onCheckedChange={setDraftAudioInputEnabled}
+                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
+                    >
+                      <Switch.Thumb className="h-4 w-4 translate-x-1 rounded-full bg-white transition-transform data-[checked]:translate-x-5" />
+                    </Switch.Root>
+                  </div>
+                </Field.Root>
+
+                {reasoningEffortOptions.length > 0 && (
+                  <Field.Root>
+                    <Field.Label className={`flex items-center gap-2 ${LABEL_CLASS} mb-1.5`}>
+                      <Brain className="h-4 w-4 text-primary-400" />
+                      Reasoning Effort
+                    </Field.Label>
+                    <div className="relative">
+                      <select
+                        value={
+                          draftReasoningEffort ||
+                          (reasoningEffortOptions.includes('medium')
+                            ? 'medium'
+                            : reasoningEffortOptions[0])
+                        }
+                        onChange={(e) => setDraftReasoningEffort(e.target.value as 'low' | 'medium' | 'high' | 'xhigh')}
+                        className="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 pr-9 text-sm text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        {reasoningEffortOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    </div>
+                  </Field.Root>
+                )}
+              </div>
 
               {/* Test connection result */}
               {testStatus === 'success' && (
