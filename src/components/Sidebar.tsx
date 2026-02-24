@@ -1,10 +1,12 @@
 'use client'
 
-import { Plus, X, Pencil, Check, MessageSquare, Github } from 'lucide-react'
+import { Plus, X, Pencil, Check, MessageSquare, Github, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import { useState } from 'react'
+import { useLLM } from '@/contexts/llm-context'
+import { getProvider } from '@/lib/providers'
 
 interface Conversation {
   id: string
@@ -21,6 +23,7 @@ interface SidebarProps {
   onEditChat: (id: string, title: string) => void
   isMobileOpen: boolean
   onCloseMobile: () => void
+  onOpenSettings: () => void
 }
 
 export function Sidebar({
@@ -32,9 +35,13 @@ export function Sidebar({
   onEditChat,
   isMobileOpen,
   onCloseMobile,
+  onOpenSettings,
 }: SidebarProps) {
   const [editingChatId, setEditingChatId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
+
+  const { activeProviderId, activeModel, isConfigured } = useLLM()
+  const activeProvider = getProvider(activeProviderId)
 
   const handleEditClick = (chat: Conversation) => {
     setEditingChatId(chat.id)
@@ -62,10 +69,11 @@ export function Sidebar({
     <aside
       className={cn(
         'fixed left-0 top-0 bottom-0 z-30 flex w-72 flex-col bg-gray-900 border-r border-gray-800 text-gray-100 transition-transform duration-300 md:relative md:translate-x-0',
-        isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        isMobileOpen ? 'translate-x-0' : '-translate-x-full',
       )}
     >
       <div className="flex flex-col h-full overflow-hidden">
+        {/* Mobile close button */}
         <div className="flex-shrink-0 flex items-center justify-between p-2 md:hidden">
           <span />
           <button onClick={onCloseMobile} className="rounded-lg p-2 hover:bg-gray-800">
@@ -73,6 +81,7 @@ export function Sidebar({
           </button>
         </div>
 
+        {/* Logo + New conversation */}
         <div className="flex-shrink-0 p-2 pt-2">
           <div className="py-4 mb-2">
             <div className="flex items-center justify-center gap-1">
@@ -98,6 +107,7 @@ export function Sidebar({
           </button>
         </div>
 
+        {/* Conversation list */}
         <nav className="flex-1 overflow-y-auto px-2">
           <ul className="space-y-2">
             {conversations.map((chat) => (
@@ -110,7 +120,7 @@ export function Sidebar({
                   onClick={() => onSelectChat(chat.id)}
                   className={cn(
                     'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-gray-800',
-                    currentConversation === chat.id && 'bg-gray-800'
+                    currentConversation === chat.id && 'bg-gray-800',
                   )}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -172,12 +182,35 @@ export function Sidebar({
           </ul>
         </nav>
 
-        <div className="flex-shrink-0 border-t border-gray-800/20">
+        {/* Footer: settings + provider badge + GitHub */}
+        <div className="flex-shrink-0 border-t border-gray-800/40">
+          {/* Settings button + active provider info */}
+          <button
+            onClick={onOpenSettings}
+            className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors group"
+            aria-label="Open LLM provider settings"
+          >
+            <Settings className="h-4 w-4 text-gray-400 group-hover:text-primary-400 flex-shrink-0 transition-colors" />
+            <div className="flex flex-col items-start min-w-0">
+              {isConfigured ? (
+                <>
+                  <span className="text-xs text-gray-300 font-medium truncate">
+                    {activeProvider?.name ?? activeProviderId}
+                  </span>
+                  <span className="text-xs text-gray-500 truncate">{activeModel}</span>
+                </>
+              ) : (
+                <span className="text-xs text-amber-400">No provider configured</span>
+              )}
+            </div>
+          </button>
+
+          {/* GitHub attribution */}
           <a
             href="https://github.com/gayakaci20"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center py-4 px-4 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex flex-col items-center py-3 px-4 text-sm text-gray-400 hover:text-white transition-colors border-t border-gray-800/40"
           >
             <Github className="w-5 h-5 mb-1" />
             <div className="flex flex-col items-center">

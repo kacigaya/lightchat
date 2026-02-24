@@ -1,5 +1,6 @@
 import './globals.css'
 import { Metadata, Viewport } from 'next'
+import { LLMProvider } from '@/contexts/llm-context'
 
 export const metadata: Metadata = {
   title: 'LightChat',
@@ -23,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full overflow-hidden">
       <body className="font-sans antialiased h-full overflow-hidden bg-gray-900">
-        {children}
+        <LLMProvider>{children}</LLMProvider>
       </body>
     </html>
   )
