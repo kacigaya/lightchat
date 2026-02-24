@@ -9,7 +9,7 @@ import { LoadingDots } from './LoadingDots'
 import { useStore } from '@/lib/store'
 import { useLLM } from '@/contexts/llm-context'
 import { getModelReasoningEffortOptions, getProvider } from '@/lib/providers'
-import { Send, Settings, AlertTriangle, Globe, Mic, Square, XCircle } from 'lucide-react'
+import { Send, Settings, AlertTriangle, Globe, Mic, Square, XCircle, Paperclip } from 'lucide-react'
 
 interface ChatProps {
   onOpenSettings: () => void
@@ -28,11 +28,13 @@ type BrowserSpeechRecognition = {
 
 export function Chat({ onOpenSettings }: ChatProps) {
   const [input, setInput] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [speechError, setSpeechError] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const speechRecognitionRef = useRef<{ stop: () => void } | null>(null)
   const recordingBaseInputRef = useRef('')
 
@@ -115,13 +117,25 @@ export function Chat({ onOpenSettings }: ChatProps) {
   }, [messages, currentConversation, conversations, editConversation])
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!input.trim() || isLoading || !isConfigured) return
-      sendMessage({ text: input })
+      const hasText = Boolean(input.trim())
+      const hasFiles = Boolean(selectedFiles?.length)
+      if ((!hasText && !hasFiles) || isLoading || !isConfigured) return
+      if (hasText && hasFiles && selectedFiles) {
+        await sendMessage({ text: input, files: selectedFiles })
+      } else if (hasText) {
+        await sendMessage({ text: input })
+      } else if (selectedFiles) {
+        await sendMessage({ files: selectedFiles })
+      }
       setInput('')
+      setSelectedFiles(null)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     },
-    [input, isLoading, isConfigured, sendMessage],
+    [input, isLoading, isConfigured, selectedFiles, sendMessage],
   )
 
   const stopRecording = useCallback((cancel = false) => {
@@ -296,6 +310,23 @@ export function Chat({ onOpenSettings }: ChatProps) {
         className="border-t border-gray-800 fixed bottom-0 left-0 right-0 bg-gray-900 z-10 safe-bottom md:left-72"
       >
         <div className="flex gap-2 w-full p-4 items-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            multiple
+            onChange={(e) => setSelectedFiles(e.target.files && e.target.files.length > 0 ? e.target.files : null)}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            disabled={!isConfigured || isLoading}
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 rounded-2xl border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            aria-label="Import images or PDF"
+          >
+            <Paperclip className="h-5 w-5" />
+          </Button>
           {audioInputEnabled && (
             <Button
               type="button"
@@ -321,7 +352,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
           {/* CHANGED: native button → Base UI Button */}
           <Button
             type="submit"
-            disabled={isLoading || !input.trim() || !isConfigured}
+            disabled={isLoading || (!input.trim() && !selectedFiles?.length) || !isConfigured}
             className="p-3 rounded-2xl bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="h-5 w-5" />
