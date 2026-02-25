@@ -11,13 +11,16 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { Button } from '@base-ui/react/button'
 import { Dialog } from '@base-ui/react/dialog'
 import { Field } from '@base-ui/react/field'
 import { Input } from '@base-ui/react/input'
+import { Select } from '@base-ui/react/select'
 import { Switch } from '@base-ui/react/switch'
 import {
   AlertTriangle,
   Brain,
+  Check,
   CheckCircle2,
   ChevronDown,
   ExternalLink,
@@ -277,23 +280,33 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               {/* Provider selector */}
               <div>
-                <SelectLabel htmlFor="provider-select">Provider</SelectLabel>
-                <div className="relative">
-                  <select
-                    id="provider-select"
-                    value={draftProviderId}
-                    onChange={(e) => syncDraft(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 pr-9 text-sm text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  >
-                    {PROVIDERS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                        {p.requiresCloudCredentials ? ' (cloud credentials)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                </div>
+                <SelectLabel>Provider</SelectLabel>
+                <Select.Root value={draftProviderId} onValueChange={(value) => { if (value) syncDraft(value) }}>
+                  <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                    <Select.Value />
+                    <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                      <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                        {PROVIDERS.map((p) => (
+                          <Select.Item
+                            key={p.id}
+                            value={p.id}
+                            className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                          >
+                            <Select.ItemText>
+                              {p.name}{p.requiresCloudCredentials ? ' (cloud credentials)' : ''}
+                            </Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Popup>
+                    </Select.Positioner>
+                  </Select.Portal>
+                </Select.Root>
               </div>
 
               {/* Cloud-credentials warning */}
@@ -334,26 +347,26 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   }}
                   placeholder={draftProvider?.apiKeyPlaceholder ?? '…'}
                   rightSlot={
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowKey((s) => !s)}
                       className="text-gray-400 hover:text-gray-200 transition-colors"
                       aria-label={showKey ? 'Hide key' : 'Show key'}
                     >
                       {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   }
                 />
 
                 {/* Remove key button */}
                 {hasApiKey && (
-                  <button
+                  <Button
                     onClick={handleRemoveKey}
                     className="mt-2 flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Remove key
-                  </button>
+                  </Button>
                 )}
               </Field.Root>
 
@@ -379,39 +392,49 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               {/* Model selector */}
               {(draftProvider?.models.length ?? 0) > 0 ? (
                 <div>
-                  <SelectLabel htmlFor="model-select">Model</SelectLabel>
-                  <div className="relative">
-                    <select
-                      id="model-select"
-                      value={draftModel}
-                      onChange={(e) => {
-                        setDraftModel(e.target.value)
-                        const nextOptions = getModelReasoningEffortOptions(
-                          draftProviderId,
-                          e.target.value,
+                  <SelectLabel>Model</SelectLabel>
+                  <Select.Root
+                    value={draftModel}
+                    onValueChange={(value) => {
+                      if (!value) return
+                      setDraftModel(value)
+                      const nextOptions = getModelReasoningEffortOptions(draftProviderId, value)
+                      if (nextOptions.length === 0) {
+                        setDraftReasoningEffort('')
+                      } else if (
+                        !draftReasoningEffort ||
+                        !nextOptions.includes(draftReasoningEffort as 'low' | 'medium' | 'high' | 'xhigh')
+                      ) {
+                        setDraftReasoningEffort(
+                          nextOptions.includes('medium') ? 'medium' : nextOptions[0],
                         )
-                        if (nextOptions.length === 0) {
-                          setDraftReasoningEffort('')
-                        } else if (
-                          !draftReasoningEffort ||
-                          !nextOptions.includes(draftReasoningEffort as 'low' | 'medium' | 'high' | 'xhigh')
-                        ) {
-                          setDraftReasoningEffort(
-                            nextOptions.includes('medium') ? 'medium' : nextOptions[0],
-                          )
-                        }
-                        setTestStatus('idle')
-                      }}
-                      className="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 pr-9 text-sm text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    >
-                      {draftProvider?.models.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  </div>
+                      }
+                      setTestStatus('idle')
+                    }}
+                  >
+                    <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                      <Select.Value />
+                      <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    </Select.Trigger>
+                    <Select.Portal>
+                      <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                        <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                          {draftProvider?.models.map((m) => (
+                            <Select.Item
+                              key={m.id}
+                              value={m.id}
+                              className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                            >
+                              <Select.ItemText>{m.name}</Select.ItemText>
+                              <Select.ItemIndicator>
+                                <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Popup>
+                      </Select.Positioner>
+                    </Select.Portal>
+                  </Select.Root>
                 </div>
               ) : (
                 /* Only show free-form model input when no extraConfigFields covers modelId.
@@ -479,25 +502,42 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                       <Brain className="h-4 w-4 text-primary-400" />
                       Reasoning Effort
                     </Field.Label>
-                    <div className="relative">
-                      <select
-                        value={
-                          draftReasoningEffort ||
-                          (reasoningEffortOptions.includes('medium')
-                            ? 'medium'
-                            : reasoningEffortOptions[0])
-                        }
-                        onChange={(e) => setDraftReasoningEffort(e.target.value as 'low' | 'medium' | 'high' | 'xhigh')}
-                        className="w-full appearance-none rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 pr-9 text-sm text-gray-100 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      >
-                        {reasoningEffortOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    </div>
+                    <Select.Root
+                      value={
+                        draftReasoningEffort ||
+                        (reasoningEffortOptions.includes('medium')
+                          ? 'medium'
+                          : reasoningEffortOptions[0])
+                      }
+                      onValueChange={(value) => {
+                        if (value) setDraftReasoningEffort(value as 'low' | 'medium' | 'high' | 'xhigh')
+                      }}
+                    >
+                      <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                        <Select.Value />
+                        <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                          <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                            {reasoningEffortOptions.map((option) => (
+                              <Select.Item
+                                key={option}
+                                value={option}
+                                className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                              >
+                                <Select.ItemText>
+                                  {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
+                                </Select.ItemText>
+                                <Select.ItemIndicator>
+                                  <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                                </Select.ItemIndicator>
+                              </Select.Item>
+                            ))}
+                          </Select.Popup>
+                        </Select.Positioner>
+                      </Select.Portal>
+                    </Select.Root>
                   </Field.Root>
                 )}
               </div>
@@ -520,7 +560,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
             {/* ── Footer ── */}
             <div className="flex items-center justify-between border-t border-gray-800 px-6 py-4 gap-3">
               {/* Test button */}
-              <button
+              <Button
                 onClick={handleTest}
                 disabled={(!hasApiKey && draftProviderId !== 'google-vertex') || testStatus === 'testing'}
                 className={cn(
@@ -535,7 +575,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   <Zap className="h-4 w-4" />
                 )}
                 {testStatus === 'testing' ? 'Testing…' : 'Test connection'}
-              </button>
+              </Button>
 
               <div className="flex items-center gap-3">
                 <Dialog.Close
@@ -543,7 +583,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 >
                   Cancel
                 </Dialog.Close>
-                <button
+                <Button
                   onClick={handleSave}
                   className={cn(
                     'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
@@ -559,7 +599,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   ) : (
                     'Save'
                   )}
-                </button>
+                </Button>
               </div>
             </div>
         </Dialog.Popup>
