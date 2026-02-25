@@ -70,7 +70,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 bottom-0 z-30 flex w-72 flex-col bg-gray-900 border-r border-gray-800 text-gray-100 transition-transform duration-300 md:relative md:translate-x-0',
+        'fixed left-0 top-0 bottom-0 z-30 flex w-72 flex-col bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 transition-transform duration-300 md:relative md:translate-x-0',
         isMobileOpen ? 'translate-x-0' : '-translate-x-full',
       )}
     >
@@ -78,9 +78,8 @@ export function Sidebar({
         {/* Mobile close button */}
         <div className="flex-shrink-0 flex items-center justify-between p-2 md:hidden">
           <span />
-          {/* CHANGED: native button → Base UI Button */}
-          <Button onClick={onCloseMobile} className="rounded-lg p-2 hover:bg-gray-800">
-            <X className="h-6 w-6 text-gray-400" />
+          <Button onClick={onCloseMobile} className="rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-800">
+            <X className="h-6 w-6 text-gray-500 dark:text-gray-400" />
           </Button>
         </div>
 
@@ -95,16 +94,15 @@ export function Sidebar({
                 height={25}
                 priority
                 unoptimized
-                className="brightness-0 invert md:brightness-100 md:invert-0"
+                className="dark:brightness-0 dark:invert"
               />
               <h1 className="text-xl font-bold">LightChat</h1>
             </div>
           </div>
 
-          {/* CHANGED: native button → Base UI Button */}
           <Button
             onClick={onNewChat}
-            className="flex w-full items-center gap-3 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+            className="flex w-full items-center gap-3 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
           >
             <Plus className="h-5 w-5" />
             New conversation
@@ -123,8 +121,8 @@ export function Sidebar({
                 <div
                   onClick={() => onSelectChat(chat.id)}
                   className={cn(
-                    'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-gray-800',
-                    currentConversation === chat.id && 'bg-gray-800',
+                    'flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors',
+                    currentConversation === chat.id && 'bg-gray-200 dark:bg-gray-800',
                   )}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -136,7 +134,7 @@ export function Sidebar({
                         onChange={(e) => setEditingTitle(e.target.value)}
                         onKeyDown={(e) => handleKeyDown(e, chat.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex-1 bg-transparent border-b border-gray-600 focus:border-primary-500 focus:outline-none min-w-0 w-full"
+                        className="flex-1 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:outline-none min-w-0 w-full"
                         autoFocus
                       />
                     ) : (
@@ -146,40 +144,37 @@ export function Sidebar({
                   {currentConversation === chat.id && (
                     <div className="flex items-center gap-1">
                       {editingChatId === chat.id ? (
-                        // CHANGED: native button → Base UI Button
                         <Button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleSaveEdit(chat.id)
                           }}
-                          className="rounded p-1 hover:bg-gray-700"
+                          className="rounded p-1 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
                           aria-label="Save"
                         >
-                          <Check className="h-4 w-4 text-green-400" />
+                          <Check className="h-4 w-4 text-green-500 dark:text-green-400" />
                         </Button>
                       ) : (
-                        // CHANGED: native button → Base UI Button
                         <Button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleEditClick(chat)
                           }}
-                          className="rounded p-1 hover:bg-gray-700"
+                          className="rounded p-1 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
                           aria-label="Rename conversation"
                         >
-                          <Pencil className="h-4 w-4 text-gray-400" />
+                          <Pencil className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                         </Button>
                       )}
-                      {/* CHANGED: native button → Base UI Button */}
                       <Button
                         onClick={(e) => {
                           e.stopPropagation()
                           onDeleteChat(chat.id)
                         }}
-                        className="rounded p-1 hover:bg-gray-700"
+                        className="rounded p-1 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
                         aria-label="Delete conversation"
                       >
-                        <X className="h-4 w-4 text-gray-400" />
+                        <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       </Button>
                     </div>
                   )}
@@ -190,25 +185,24 @@ export function Sidebar({
         </nav>
 
         {/* Footer: settings + provider badge + GitHub */}
-        <div className="flex-shrink-0 border-t border-gray-800/40">
+        <div className="flex-shrink-0 border-t border-gray-200/60 dark:border-gray-800/40">
           {/* Settings button + active provider info */}
-          {/* CHANGED: native button → Base UI Button */}
           <Button
             onClick={onOpenSettings}
-            className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors group"
+            className="flex w-full items-center gap-3 px-4 py-3 text-sm hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors group"
             aria-label="Open LLM provider settings"
           >
-            <Settings className="h-4 w-4 text-gray-400 group-hover:text-primary-400 flex-shrink-0 transition-colors" />
+            <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-primary-400 flex-shrink-0 transition-colors" />
             <div className="flex flex-col items-start min-w-0">
               {isConfigured ? (
                 <>
-                  <span className="text-xs text-gray-300 font-medium truncate">
+                  <span className="text-xs text-gray-600 dark:text-gray-300 font-medium truncate">
                     {activeProvider?.name ?? activeProviderId}
                   </span>
-                  <span className="text-xs text-gray-500 truncate">{activeModel}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 truncate">{activeModel}</span>
                 </>
               ) : (
-                <span className="text-xs text-amber-400">No provider configured</span>
+                <span className="text-xs text-amber-500 dark:text-amber-400">No provider configured</span>
               )}
             </div>
           </Button>
@@ -218,7 +212,7 @@ export function Sidebar({
             href="https://github.com/gayakaci20"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center py-3 px-4 text-sm text-gray-400 hover:text-white transition-colors border-t border-gray-800/40"
+            className="flex flex-col items-center py-3 px-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors border-t border-gray-200/60 dark:border-gray-800/40"
           >
             <Github className="w-5 h-5 mb-1" />
             <div className="flex flex-col items-center">

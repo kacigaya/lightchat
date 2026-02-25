@@ -28,13 +28,17 @@ import {
   EyeOff,
   Loader2,
   Lock,
+  Monitor,
+  Moon,
   ShieldAlert,
+  Sun,
   Trash2,
   X,
   Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLLM } from '@/contexts/llm-context'
+import { useTheme, type Theme } from '@/contexts/theme-context'
 import {
   PROVIDERS,
   getModelReasoningEffortOptions,
@@ -53,7 +57,16 @@ type TestStatus = 'idle' | 'testing' | 'success' | 'error'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const LABEL_CLASS = 'text-sm font-medium text-gray-300'
+const LABEL_CLASS = 'text-sm font-medium text-gray-700 dark:text-gray-300'
+
+const SELECT_TRIGGER_CLASS =
+  'w-full flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 hover:border-gray-300 dark:hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors'
+
+const SELECT_POPUP_CLASS =
+  'z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 shadow-xl'
+
+const SELECT_ITEM_CLASS =
+  'flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-900 dark:text-gray-100 outline-none hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[selected]:text-primary-500 dark:data-[selected]:text-primary-400'
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -88,8 +101,8 @@ function InputWithSlot({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100',
-          'placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
+          'w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100',
+          'placeholder-gray-400 dark:placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500',
           rightSlot ? 'pr-10' : '',
           className,
         )}
@@ -100,6 +113,14 @@ function InputWithSlot({
     </div>
   )
 }
+
+// ─── Theme icons ─────────────────────────────────────────────────────────────
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = [
+  { value: 'light', label: 'Light', icon: <Sun className="h-4 w-4" /> },
+  { value: 'dark', label: 'Dark', icon: <Moon className="h-4 w-4" /> },
+  { value: 'system', label: 'System', icon: <Monitor className="h-4 w-4" /> },
+]
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
@@ -113,6 +134,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     updateProviderSettings,
     removeProviderKey,
   } = useLLM()
+
+  const { theme, setTheme } = useTheme()
 
   // ── Local "draft" state so changes are only applied on Save ───────────────
 
@@ -134,6 +157,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     'low' | 'medium' | 'high' | 'xhigh' | ''
   >(draftSaved?.reasoningEffort ?? '')
   const [draftAudioInputEnabled, setDraftAudioInputEnabled] = useState(audioInputEnabled)
+  const [draftTheme, setDraftTheme] = useState<Theme>(theme)
 
   const [showKey, setShowKey] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
@@ -153,13 +177,14 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       setDraftEnableWebSearch(saved?.enableWebSearch ?? false)
       setDraftReasoningEffort(saved?.reasoningEffort ?? '')
       setDraftAudioInputEnabled(audioInputEnabled)
+      setDraftTheme(theme)
       setTestStatus('idle')
       setTestError('')
       setIsSaved(false)
       setShowKey(false)
       setDraftKeyRemoved(false)
     },
-    [settings, audioInputEnabled],
+    [settings, audioInputEnabled, theme],
   )
 
   // Re-sync when modal opens
@@ -185,9 +210,10 @@ export function SettingsModal({ isOpen, onClose }: Props) {
       reasoningEffort: draftReasoningEffort || undefined,
     })
     setAudioInputEnabled(draftAudioInputEnabled)
+    setTheme(draftTheme)
     setIsSaved(true)
     setTimeout(() => setIsSaved(false), 2000)
-  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, draftEnableWebSearch, draftReasoningEffort, draftAudioInputEnabled, draftKeyRemoved, setActiveProvider, setAudioInputEnabled, updateProviderSettings, removeProviderKey])
+  }, [draftProviderId, draftApiKey, draftModel, draftExtraConfig, draftEnableWebSearch, draftReasoningEffort, draftAudioInputEnabled, draftKeyRemoved, draftTheme, setActiveProvider, setAudioInputEnabled, updateProviderSettings, removeProviderKey, setTheme])
 
   const handleRemoveKey = useCallback(() => {
     setDraftApiKey('')
@@ -249,15 +275,15 @@ export function SettingsModal({ isOpen, onClose }: Props) {
     >
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-150 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl transition-all duration-[180ms] data-[starting-style]:opacity-0 data-[starting-style]:scale-[0.96] data-[ending-style]:opacity-0 data-[ending-style]:scale-[0.96]">
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl transition-all duration-[180ms] data-[starting-style]:opacity-0 data-[starting-style]:scale-[0.96] data-[ending-style]:opacity-0 data-[ending-style]:scale-[0.96]">
             {/* ── Header ── */}
-            <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
-              <div className="flex items-center gap-2 text-white">
+            <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+              <div className="flex items-center gap-2 text-gray-900 dark:text-white">
                 <Lock className="h-4 w-4 text-primary-400" />
                 <Dialog.Title className="text-base font-semibold">LLM Provider Settings</Dialog.Title>
               </div>
               <Dialog.Close
-                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+                className="rounded-lg p-1.5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
                 aria-label="Close settings"
               >
                 <X className="h-5 w-5" />
@@ -268,8 +294,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
             <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
 
               {/* Security notice */}
-              <div className="flex gap-3 rounded-lg border border-amber-800/50 bg-amber-950/30 px-3 py-2.5 text-xs text-amber-300">
-                <ShieldAlert className="h-4 w-4 flex-shrink-0 mt-0.5 text-amber-400" />
+              <div className="flex gap-3 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300">
+                <ShieldAlert className="h-4 w-4 flex-shrink-0 mt-0.5 text-amber-500 dark:text-amber-400" />
                 <span>
                   API keys are stored in <strong>browser localStorage</strong> (client-side only)
                   and sent over HTTPS to your Next.js API route for each request. Never share your
@@ -282,18 +308,18 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               <div>
                 <SelectLabel>Provider</SelectLabel>
                 <Select.Root value={draftProviderId} onValueChange={(value) => { if (value) syncDraft(value) }}>
-                  <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                  <Select.Trigger className={SELECT_TRIGGER_CLASS}>
                     <Select.Value />
-                    <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                   </Select.Trigger>
                   <Select.Portal>
                     <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                      <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                      <Select.Popup className={SELECT_POPUP_CLASS}>
                         {PROVIDERS.map((p) => (
                           <Select.Item
                             key={p.id}
                             value={p.id}
-                            className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                            className={SELECT_ITEM_CLASS}
                           >
                             <Select.ItemText>
                               {p.name}{p.requiresCloudCredentials ? ' (cloud credentials)' : ''}
@@ -311,8 +337,8 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               {/* Cloud-credentials warning */}
               {draftProvider?.requiresCloudCredentials && (
-                <div className="flex gap-3 rounded-lg border border-blue-800/50 bg-blue-950/30 px-3 py-2.5 text-xs text-blue-300">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-400" />
+                <div className="flex gap-3 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/30 px-3 py-2.5 text-xs text-blue-700 dark:text-blue-300">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-500 dark:text-blue-400" />
                   <span>
                     This provider uses cloud IAM credentials rather than a simple API key.
                     Fill in all required fields below; some providers also require additional
@@ -350,7 +376,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     <Button
                       type="button"
                       onClick={() => setShowKey((s) => !s)}
-                      className="text-gray-400 hover:text-gray-200 transition-colors"
+                      className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                       aria-label={showKey ? 'Hide key' : 'Show key'}
                     >
                       {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -362,7 +388,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 {hasApiKey && (
                   <Button
                     onClick={handleRemoveKey}
-                    className="mt-2 flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
+                    className="mt-2 flex items-center gap-1.5 text-xs text-red-500 dark:text-red-400 hover:text-red-400 dark:hover:text-red-300 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Remove key
@@ -375,7 +401,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                 <Field.Root key={field.key}>
                   <Field.Label className={`block ${LABEL_CLASS} mb-1.5`}>
                     {field.label}
-                    {field.required && <span className="ml-1 text-red-400">*</span>}
+                    {field.required && <span className="ml-1 text-red-500 dark:text-red-400">*</span>}
                   </Field.Label>
                   <InputWithSlot
                     type={field.type}
@@ -412,18 +438,18 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                       setTestStatus('idle')
                     }}
                   >
-                    <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                    <Select.Trigger className={SELECT_TRIGGER_CLASS}>
                       <Select.Value />
-                      <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                     </Select.Trigger>
                     <Select.Portal>
                       <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                        <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                        <Select.Popup className={SELECT_POPUP_CLASS}>
                           {draftProvider?.models.map((m) => (
                             <Select.Item
                               key={m.id}
                               value={m.id}
-                              className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                              className={SELECT_ITEM_CLASS}
                             >
                               <Select.ItemText>{m.name}</Select.ItemText>
                               <Select.ItemIndicator>
@@ -457,21 +483,52 @@ export function SettingsModal({ isOpen, onClose }: Props) {
               )}
 
               {/* Advanced model/runtime options */}
-              <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-850/40 px-3 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Advanced</p>
+              <div className="space-y-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-850/40 px-3 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Advanced</p>
+
+                {/* Appearance */}
+                <Field.Root>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <Field.Label className={LABEL_CLASS}>Appearance</Field.Label>
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        Choose light, dark, or match your system preference.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-0.5">
+                      {THEME_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setDraftTheme(opt.value)}
+                          className={cn(
+                            'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                            draftTheme === opt.value
+                              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
+                          )}
+                          aria-label={opt.label}
+                        >
+                          {opt.icon}
+                          <span className="hidden sm:inline">{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Field.Root>
 
                 <Field.Root>
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <Field.Label className={LABEL_CLASS}>Enable Web Search</Field.Label>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                         Allow supported models to call the <code>web_search</code> tool.
                       </p>
                     </div>
                     <Switch.Root
                       checked={draftEnableWebSearch}
                       onCheckedChange={setDraftEnableWebSearch}
-                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
+                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-300 dark:bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
                     >
                       <Switch.Thumb className="h-4 w-4 translate-x-1 rounded-full bg-white transition-transform data-[checked]:translate-x-5" />
                     </Switch.Root>
@@ -482,14 +539,14 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <Field.Label className={LABEL_CLASS}>Enable Audio Input</Field.Label>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                         Show microphone controls and use browser speech recognition.
                       </p>
                     </div>
                     <Switch.Root
                       checked={draftAudioInputEnabled}
                       onCheckedChange={setDraftAudioInputEnabled}
-                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
+                      className="relative inline-flex h-6 w-10 items-center rounded-full bg-gray-300 dark:bg-gray-700 data-[checked]:bg-primary-600 transition-colors"
                     >
                       <Switch.Thumb className="h-4 w-4 translate-x-1 rounded-full bg-white transition-transform data-[checked]:translate-x-5" />
                     </Switch.Root>
@@ -513,18 +570,18 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                         if (value) setDraftReasoningEffort(value as 'low' | 'medium' | 'high' | 'xhigh')
                       }}
                     >
-                      <Select.Trigger className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 hover:border-gray-600 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors">
+                      <Select.Trigger className={SELECT_TRIGGER_CLASS}>
                         <Select.Value />
-                        <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                       </Select.Trigger>
                       <Select.Portal>
                         <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                          <Select.Popup className="z-[200] max-h-60 overflow-y-auto rounded-lg border border-gray-700 bg-gray-800 py-1 shadow-xl">
+                          <Select.Popup className={SELECT_POPUP_CLASS}>
                             {reasoningEffortOptions.map((option) => (
                               <Select.Item
                                 key={option}
                                 value={option}
-                                className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm text-gray-100 outline-none hover:bg-gray-700 data-[highlighted]:bg-gray-700 data-[selected]:text-primary-400"
+                                className={SELECT_ITEM_CLASS}
                               >
                                 <Select.ItemText>
                                   {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
@@ -544,28 +601,28 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               {/* Test connection result */}
               {testStatus === 'success' && (
-                <div className="flex items-center gap-2 rounded-lg bg-green-950/40 border border-green-800/50 px-3 py-2 text-sm text-green-300">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
+                <div className="flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/50 px-3 py-2 text-sm text-green-700 dark:text-green-300">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-500 dark:text-green-400" />
                   Connection successful — credentials are valid.
                 </div>
               )}
               {testStatus === 'error' && (
-                <div className="flex items-start gap-2 rounded-lg bg-red-950/40 border border-red-800/50 px-3 py-2 text-sm text-red-300">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-red-400" />
+                <div className="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
                   <span className="break-all">{testError}</span>
                 </div>
               )}
             </div>
 
             {/* ── Footer ── */}
-            <div className="flex items-center justify-between border-t border-gray-800 px-6 py-4 gap-3">
+            <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-6 py-4 gap-3">
               {/* Test button */}
               <Button
                 onClick={handleTest}
                 disabled={(!hasApiKey && draftProviderId !== 'google-vertex') || testStatus === 'testing'}
                 className={cn(
                   'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                  'border border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white',
+                  'border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white',
                   'disabled:opacity-40 disabled:cursor-not-allowed',
                 )}
               >
@@ -579,7 +636,7 @@ export function SettingsModal({ isOpen, onClose }: Props) {
 
               <div className="flex items-center gap-3">
                 <Dialog.Close
-                  className="rounded-lg px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  className="rounded-lg px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Cancel
                 </Dialog.Close>
