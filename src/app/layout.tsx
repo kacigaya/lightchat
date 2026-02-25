@@ -1,6 +1,7 @@
 import './globals.css'
 import { Metadata, Viewport } from 'next'
 import { LLMProvider } from '@/contexts/llm-context'
+import { ThemeProvider } from '@/contexts/theme-context'
 
 export const metadata: Metadata = {
   title: 'LightChat',
@@ -22,9 +23,27 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark h-full overflow-hidden">
-      <body className="font-sans antialiased h-full overflow-hidden bg-gray-900">
-        <LLMProvider>{children}</LLMProvider>
+    <html lang="en" className="h-full overflow-hidden" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('lightchat-theme');
+                  var isDark = theme === 'dark' ||
+                    (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) document.documentElement.classList.add('dark');
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="font-sans antialiased h-full overflow-hidden bg-white dark:bg-gray-900 transition-colors duration-200">
+        <ThemeProvider>
+          <LLMProvider>{children}</LLMProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -223,28 +223,26 @@ export function Chat({ onOpenSettings }: ChatProps) {
   )
 
   return (
-    <div className="flex h-full flex-col bg-gray-900">
+    <div className="flex h-full flex-col bg-white dark:bg-gray-900 transition-colors">
       {/* Provider badge */}
       <div className="absolute top-3 right-4 z-10 flex items-center gap-2">
         {isConfigured ? (
-          <span className="rounded-full bg-gray-800 border border-gray-700 px-2.5 py-0.5 text-xs text-gray-400">
+          <span className="rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
             {activeProvider?.badge ?? activeProviderId} · {activeModel}
             {reasoningEffortOptions.length > 0 && activeReasoningEffort ? ` · ${activeReasoningEffort}` : ''}
           </span>
         ) : (
-          // CHANGED: native button → Base UI Button
           <Button
             onClick={onOpenSettings}
-            className="flex items-center gap-1.5 rounded-full bg-amber-900/50 border border-amber-700/50 px-2.5 py-0.5 text-xs text-amber-300 hover:bg-amber-900 transition-colors"
+            className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700/50 px-2.5 py-0.5 text-xs text-amber-600 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
           >
             <AlertTriangle className="h-3 w-3" />
             Configure provider
           </Button>
         )}
-        {/* CHANGED: native button → Base UI Button */}
         <Button
           onClick={onOpenSettings}
-          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
+          className="rounded-lg p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           aria-label="Open settings"
         >
           <Settings className="h-4 w-4" />
@@ -253,7 +251,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
 
       {supportsWebSearchTool && activeEnableWebSearch && (isLoading || hasActiveWebSearchTool) && (
         <div className="absolute top-12 right-4 z-10">
-          <span className="inline-flex items-center gap-1 rounded-full border border-blue-700/50 bg-blue-900/40 px-2 py-0.5 text-[11px] text-blue-200">
+          <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 text-[11px] text-blue-600 dark:text-blue-200">
             <Globe className="h-3 w-3" />
             Web search active
           </span>
@@ -266,13 +264,12 @@ export function Chat({ onOpenSettings }: ChatProps) {
           <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
             {!isConfigured ? (
               <>
-                <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-6 py-5 max-w-sm">
-                  <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
-                  <p className="text-sm text-amber-200 font-medium mb-1">No provider configured</p>
-                  <p className="text-xs text-amber-400 mb-4">
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 px-6 py-5 max-w-sm">
+                  <AlertTriangle className="h-8 w-8 text-amber-500 dark:text-amber-400 mx-auto mb-3" />
+                  <p className="text-sm text-amber-700 dark:text-amber-200 font-medium mb-1">No provider configured</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-4">
                     Open Settings to add your API key and select a model.
                   </p>
-                  {/* CHANGED: native button → Base UI Button */}
                   <Button
                     onClick={onOpenSettings}
                     className="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 transition-colors"
@@ -307,7 +304,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
       {/* Input form */}
       <form
         onSubmit={handleSubmit}
-        className="border-t border-gray-800 fixed bottom-0 left-0 right-0 bg-gray-900 z-10 safe-bottom md:left-72"
+        className="border-t border-gray-200 dark:border-gray-800 fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 z-10 safe-bottom md:left-72 transition-colors"
       >
         <div className="flex gap-2 w-full p-4 items-center">
           <input
@@ -323,7 +320,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
             type="button"
             disabled={!isConfigured || isLoading}
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 rounded-2xl border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="p-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             aria-label="Import images or PDF files"
           >
             <Paperclip className="h-5 w-5" />
@@ -333,7 +330,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
               type="button"
               disabled={!isConfigured || !speechRecognitionSupported || isLoading}
               onClick={startRecording}
-              className="p-3 rounded-2xl border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+              className="p-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
               aria-label="Start voice input"
             >
               <Mic className="h-5 w-5" />
@@ -346,11 +343,10 @@ export function Chat({ onOpenSettings }: ChatProps) {
             onKeyDown={handleKeyDown}
             placeholder={isConfigured ? 'Ask a question…' : 'Configure a provider in Settings first…'}
             disabled={!isConfigured}
-            className="flex-1 resize-none rounded-2xl border border-gray-800 bg-gray-800 p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 resize-none rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 p-3 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             rows={1}
             style={{ maxHeight: '150px' }}
           />
-          {/* CHANGED: native button → Base UI Button */}
           <Button
             type="submit"
             disabled={isLoading || (!input.trim() && !hasSelectedFiles(selectedFiles)) || !isConfigured}
@@ -361,7 +357,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
         </div>
         {audioInputEnabled && isRecording && (
           <div className="px-4 pb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-red-300">
+            <div className="flex items-center gap-2 text-xs text-red-500 dark:text-red-300">
               <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-pulse" />
               Recording {Math.floor(recordingSeconds / 60).toString().padStart(2, '0')}:
               {(recordingSeconds % 60).toString().padStart(2, '0')}
@@ -370,7 +366,7 @@ export function Chat({ onOpenSettings }: ChatProps) {
               <Button
                 type="button"
                 onClick={() => stopRecording(true)}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:bg-gray-800"
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <XCircle className="h-3.5 w-3.5" />
                 Cancel
@@ -387,10 +383,10 @@ export function Chat({ onOpenSettings }: ChatProps) {
           </div>
         )}
         {audioInputEnabled && speechError && (
-          <div className="px-4 pb-3 text-xs text-amber-300">{speechError}</div>
+          <div className="px-4 pb-3 text-xs text-amber-600 dark:text-amber-300">{speechError}</div>
         )}
         {audioInputEnabled && !speechRecognitionSupported && (
-          <div className="px-4 pb-3 text-xs text-amber-300">
+          <div className="px-4 pb-3 text-xs text-amber-600 dark:text-amber-300">
             Speech recognition is not supported in this browser.
           </div>
         )}
