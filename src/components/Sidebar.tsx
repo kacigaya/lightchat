@@ -2,6 +2,7 @@
 
 import { Plus, X, Pencil, Check, MessageSquare, Github, Settings } from 'lucide-react'
 import { Button } from '@base-ui/react/button'
+import { Input } from '@base-ui/react/input'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -129,13 +130,13 @@ export function Sidebar({
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <MessageSquare className="w-5 h-5 flex-shrink-0" />
                     {editingChatId === chat.id ? (
-                      <input
+                      <Input
                         type="text"
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
                         onKeyDown={(e) => handleKeyDown(e, chat.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex-1 bg-transparent border-b border-gray-600 focus:border-blue-500 focus:outline-none min-w-0 w-full"
+                        className="flex-1 bg-transparent border-b border-gray-600 focus:border-primary-500 focus:outline-none min-w-0 w-full"
                         autoFocus
                       />
                     ) : (
