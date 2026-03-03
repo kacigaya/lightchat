@@ -23,15 +23,23 @@ export default function Home() {
   } = useStore()
 
   return (
-    <div className="fixed inset-0 flex bg-white dark:bg-gray-900 transition-colors">
+    <div className="fixed inset-0 flex bg-white dark:bg-gray-950 transition-colors">
       {/* Mobile hamburger */}
       <Button
         onClick={() => setMobileMenuOpen(true)}
-        className="fixed left-4 top-4 z-40 rounded-lg bg-white dark:bg-gray-900 p-2 text-gray-900 dark:text-white shadow-sm dark:shadow-none md:hidden"
+        className="fixed left-4 top-3.5 z-40 rounded-xl bg-white dark:bg-gray-900 p-2 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors md:hidden"
         aria-label="Open sidebar"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-5 w-5" />
       </Button>
+
+      {/* Mobile backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
       <Sidebar
         conversations={conversations}
@@ -52,7 +60,7 @@ export default function Home() {
           <div className="absolute inset-0 flex items-center justify-center">
             <Button
               onClick={addConversation}
-              className="rounded-lg bg-gray-100 dark:bg-gray-800 px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition-colors shadow-sm"
             >
               Start a new conversation
             </Button>
