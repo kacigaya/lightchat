@@ -56,7 +56,7 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex w-full max-w-3xl mx-auto mb-6 justify-end"
+        className="flex w-full max-w-3xl mx-auto mb-4 justify-end"
       >
         <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-sm bg-primary-500 dark:bg-primary-700 text-white shadow-sm">
           <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -73,7 +73,7 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex w-full max-w-3xl mx-auto mb-6 justify-start gap-3"
+      className="flex w-full max-w-3xl mx-auto mb-4 justify-start gap-3 group"
     >
       {/* AI avatar */}
       <div className="flex-shrink-0 mt-0.5">
@@ -90,8 +90,8 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
       </div>
 
       {/* Message bubble + copy button */}
-      <div className="flex-1 min-w-0 group relative pb-8">
-        <div className="prose prose-sm max-w-none break-words dark:prose-invert text-gray-800 dark:text-gray-100">
+      <div className="flex-1 min-w-0 flex flex-col">
+        <div className="prose prose-sm max-w-none break-words dark:prose-invert prose-code:before:content-none prose-code:after:content-none text-gray-800 dark:text-gray-100">
           {isLoading ? (
             <LoadingDots />
           ) : (
@@ -219,7 +219,7 @@ export function ChatMessage({ content, type, isLoading }: ChatMessageProps) {
           <Button
             onClick={handleMessageCopy}
             className={cn(
-              'absolute bottom-1 left-0 flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-all',
+              'mt-1 h-6 flex items-center gap-1 px-2 rounded-md text-xs transition-all self-start',
               'opacity-0 group-hover:opacity-100',
               isMessageCopied
                 ? 'text-green-500 bg-green-50 dark:bg-green-950/30'
