@@ -312,26 +312,24 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                     <Select.Value />
                     <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                   </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                      <Select.Popup className={SELECT_POPUP_CLASS}>
-                        {PROVIDERS.map((p) => (
-                          <Select.Item
-                            key={p.id}
-                            value={p.id}
-                            className={SELECT_ITEM_CLASS}
-                          >
-                            <Select.ItemText>
-                              {p.name}{p.requiresCloudCredentials ? ' (cloud credentials)' : ''}
-                            </Select.ItemText>
-                            <Select.ItemIndicator>
-                              <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                        ))}
-                      </Select.Popup>
-                    </Select.Positioner>
-                  </Select.Portal>
+                  <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                    <Select.Popup className={SELECT_POPUP_CLASS}>
+                      {PROVIDERS.map((p) => (
+                        <Select.Item
+                          key={p.id}
+                          value={p.id}
+                          className={SELECT_ITEM_CLASS}
+                        >
+                          <Select.ItemText>
+                            {p.name}{p.requiresCloudCredentials ? ' (cloud credentials)' : ''}
+                          </Select.ItemText>
+                          <Select.ItemIndicator>
+                            <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      ))}
+                    </Select.Popup>
+                  </Select.Positioner>
                 </Select.Root>
               </div>
 
@@ -442,24 +440,22 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                       <Select.Value />
                       <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                     </Select.Trigger>
-                    <Select.Portal>
-                      <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                        <Select.Popup className={SELECT_POPUP_CLASS}>
-                          {draftProvider?.models.map((m) => (
-                            <Select.Item
-                              key={m.id}
-                              value={m.id}
-                              className={SELECT_ITEM_CLASS}
-                            >
-                              <Select.ItemText>{m.name}</Select.ItemText>
-                              <Select.ItemIndicator>
-                                <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
-                              </Select.ItemIndicator>
-                            </Select.Item>
-                          ))}
-                        </Select.Popup>
-                      </Select.Positioner>
-                    </Select.Portal>
+                    <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                      <Select.Popup className={SELECT_POPUP_CLASS}>
+                        {draftProvider?.models.map((m) => (
+                          <Select.Item
+                            key={m.id}
+                            value={m.id}
+                            className={SELECT_ITEM_CLASS}
+                          >
+                            <Select.ItemText>{m.name}</Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Popup>
+                    </Select.Positioner>
                   </Select.Root>
                 </div>
               ) : (
@@ -574,26 +570,24 @@ export function SettingsModal({ isOpen, onClose }: Props) {
                         <Select.Value />
                         <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                       </Select.Trigger>
-                      <Select.Portal>
-                        <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
-                          <Select.Popup className={SELECT_POPUP_CLASS}>
-                            {reasoningEffortOptions.map((option) => (
-                              <Select.Item
-                                key={option}
-                                value={option}
-                                className={SELECT_ITEM_CLASS}
-                              >
-                                <Select.ItemText>
-                                  {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
-                                </Select.ItemText>
-                                <Select.ItemIndicator>
-                                  <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
-                                </Select.ItemIndicator>
-                              </Select.Item>
-                            ))}
-                          </Select.Popup>
-                        </Select.Positioner>
-                      </Select.Portal>
+                      <Select.Positioner sideOffset={4} alignItemWithTrigger={false}>
+                        <Select.Popup className={SELECT_POPUP_CLASS}>
+                          {reasoningEffortOptions.map((option) => (
+                            <Select.Item
+                              key={option}
+                              value={option}
+                              className={SELECT_ITEM_CLASS}
+                            >
+                              <Select.ItemText>
+                                {option === 'xhigh' ? 'X-High' : option[0].toUpperCase() + option.slice(1)}
+                              </Select.ItemText>
+                              <Select.ItemIndicator>
+                                <Check className="h-3.5 w-3.5 text-primary-400 ml-2" />
+                              </Select.ItemIndicator>
+                            </Select.Item>
+                          ))}
+                        </Select.Popup>
+                      </Select.Positioner>
                     </Select.Root>
                   </Field.Root>
                 )}
