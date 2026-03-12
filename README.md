@@ -55,7 +55,7 @@ Live demo: [https://lightchat-two.vercel.app](https://lightchat-two.vercel.app)
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gayakaci20/light-chat.git
+   git clone https://github.com/kacigaya/light-chat.git
    cd light-chat
    ```
 

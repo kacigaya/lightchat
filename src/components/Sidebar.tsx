@@ -257,7 +257,7 @@ export function Sidebar({
 
             {/* GitHub attribution */}
             <a
-              href="https://github.com/gayakaci20"
+              href="https://github.com/kacigaya"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 py-3 px-4 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors border-t border-gray-200 dark:border-gray-800"
